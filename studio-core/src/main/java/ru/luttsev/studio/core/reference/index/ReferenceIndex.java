@@ -68,6 +68,13 @@ public final class ReferenceIndex {
         return byTargetPath.getOrDefault(targetPath, List.of());
     }
 
+    public List<ResolvedReferenceUsage> usagesOfSubtree(DocumentPath targetPath) {
+        Objects.requireNonNull(targetPath, "targetPath must not be null");
+        return resolvedReferences.stream()
+                .filter(reference -> reference.targetPath().startsWith(targetPath))
+                .toList();
+    }
+
     public List<ReferenceUsage> referencesFrom(DocumentPath sourcePath) {
         Objects.requireNonNull(sourcePath, "sourcePath must not be null");
         return references.stream()

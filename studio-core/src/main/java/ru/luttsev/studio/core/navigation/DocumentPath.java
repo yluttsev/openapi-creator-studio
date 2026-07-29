@@ -83,6 +83,25 @@ public final class DocumentPath {
                 && segments.subList(0, other.segments.size()).equals(other.segments);
     }
 
+    public DocumentPath replacePrefix(
+            DocumentPath currentPrefix,
+            DocumentPath newPrefix) {
+        Objects.requireNonNull(currentPrefix, "currentPrefix must not be null");
+        Objects.requireNonNull(newPrefix, "newPrefix must not be null");
+        if (!startsWith(currentPrefix)) {
+            throw new IllegalArgumentException(
+                    "path must start with currentPrefix");
+        }
+
+        DocumentPath result = newPrefix;
+        for (int index = currentPrefix.segments.size();
+                index < segments.size();
+                index++) {
+            result = result.child(segments.get(index));
+        }
+        return result;
+    }
+
     public String toPointer() {
         if (isRoot()) {
             return "";

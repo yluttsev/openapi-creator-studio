@@ -56,6 +56,25 @@ class DocumentPathTest {
     }
 
     @Test
+    void replacesPathPrefixAndPreservesRemainingSegments() {
+        DocumentPath property =
+                DocumentPath.parse("/components/schemas/User/properties/id");
+
+        DocumentPath renamed = property.replacePrefix(
+                DocumentPath.parse("/components/schemas/User"),
+                DocumentPath.parse("/components/schemas/Customer"));
+
+        assertEquals(
+                "/components/schemas/Customer/properties/id",
+                renamed.toPointer());
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> property.replacePrefix(
+                        DocumentPath.parse("/paths"),
+                        DocumentPath.parse("/webhooks")));
+    }
+
+    @Test
     void convertsUriFragmentRepresentation() {
         DocumentPath path = DocumentPath.root()
                 .child("components")

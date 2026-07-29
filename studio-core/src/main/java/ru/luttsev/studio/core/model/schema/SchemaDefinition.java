@@ -11,12 +11,13 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.luttsev.studio.core.model.reference.ReferenceHolder;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 
 @Getter
 @Setter
 @NoArgsConstructor
-public final class SchemaDefinition implements Schema {
+public final class SchemaDefinition implements Schema, ReferenceHolder {
 
     private Set<JsonType> types = new LinkedHashSet<>();
     private SchemaFormat format;

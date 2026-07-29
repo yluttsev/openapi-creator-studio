@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.luttsev.studio.core.model.ExtensibleObject;
 import ru.luttsev.studio.core.model.parameter.Parameter;
+import ru.luttsev.studio.core.model.reference.ReferenceHolder;
 import ru.luttsev.studio.core.model.reference.ReferenceOr;
 import ru.luttsev.studio.core.model.schema.UriReference;
 import ru.luttsev.studio.core.model.server.Server;
@@ -16,7 +17,7 @@ import ru.luttsev.studio.core.model.server.Server;
 @Getter
 @Setter
 @NoArgsConstructor
-public final class PathItem extends ExtensibleObject {
+public final class PathItem extends ExtensibleObject implements ReferenceHolder {
 
     private UriReference ref;
     private String summary;
