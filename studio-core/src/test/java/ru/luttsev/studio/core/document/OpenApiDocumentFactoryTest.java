@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
 
 class OpenApiDocumentFactoryTest {
@@ -14,12 +15,12 @@ class OpenApiDocumentFactoryTest {
 
     @Test
     void createsInitializedDocument() {
-        var parameters = new NewDocumentParameters(
+        NewDocumentParameters parameters = new NewDocumentParameters(
                 OpenApiVersion.V3_1_2,
                 "Users API",
                 "1.0.0");
 
-        var document = factory.create(parameters);
+        OpenApiDocument document = factory.create(parameters);
 
         assertEquals(OpenApiVersion.V3_1_2, document.getOpenApiVersion());
         assertEquals("Users API", document.getInfo().getTitle());
