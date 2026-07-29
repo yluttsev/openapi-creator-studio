@@ -45,6 +45,17 @@ class DocumentPathTest {
     }
 
     @Test
+    void checksPathPrefixes() {
+        DocumentPath schemas = DocumentPath.parse("/components/schemas");
+        DocumentPath user = DocumentPath.parse("/components/schemas/User");
+
+        assertTrue(user.startsWith(schemas));
+        assertTrue(user.startsWith(DocumentPath.root()));
+        assertTrue(user.startsWith(user));
+        assertFalse(schemas.startsWith(user));
+    }
+
+    @Test
     void convertsUriFragmentRepresentation() {
         DocumentPath path = DocumentPath.root()
                 .child("components")

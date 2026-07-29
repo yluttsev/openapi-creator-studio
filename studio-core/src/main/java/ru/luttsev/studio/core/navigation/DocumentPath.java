@@ -77,6 +77,12 @@ public final class DocumentPath {
         return Optional.of(new DocumentPath(segments.subList(0, segments.size() - 1)));
     }
 
+    public boolean startsWith(DocumentPath other) {
+        Objects.requireNonNull(other, "other must not be null");
+        return segments.size() >= other.segments.size()
+                && segments.subList(0, other.segments.size()).equals(other.segments);
+    }
+
     public String toPointer() {
         if (isRoot()) {
             return "";

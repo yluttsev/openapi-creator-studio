@@ -7,18 +7,18 @@ import ru.luttsev.studio.core.model.path.PathItem;
 import ru.luttsev.studio.core.model.reference.ReferenceObject;
 import ru.luttsev.studio.core.model.schema.Schema;
 import ru.luttsev.studio.core.model.schema.SchemaDefinition;
-import ru.luttsev.studio.core.model.schema.UriReference;
-import ru.luttsev.studio.core.navigation.DocumentEntry;
+import ru.luttsev.studio.core.navigation.DocumentPath;
 import ru.luttsev.studio.core.reference.ReferenceFailure;
-import ru.luttsev.studio.core.reference.ReferenceResolution;
-import ru.luttsev.studio.core.reference.ResolvedReference;
-import ru.luttsev.studio.core.reference.UnresolvedReference;
+import ru.luttsev.studio.core.reference.index.ReferenceIndex;
+import ru.luttsev.studio.core.reference.index.ReferenceIndexBuilder;
+import ru.luttsev.studio.core.reference.index.ReferenceUsage;
+import ru.luttsev.studio.core.reference.index.ResolvedReferenceUsage;
+import ru.luttsev.studio.core.reference.index.UnresolvedReferenceUsage;
 import ru.luttsev.studio.core.validation.ValidationCode;
 import ru.luttsev.studio.core.validation.ValidationContext;
 import ru.luttsev.studio.core.validation.ValidationIssue;
 import ru.luttsev.studio.core.validation.ValidationRule;
 import ru.luttsev.studio.core.validation.ValidationSeverity;
-import ru.luttsev.studio.core.validation.support.DocumentEntries;
 import ru.luttsev.studio.core.validation.support.ReferenceExpectedTypeResolver;
 import ru.luttsev.studio.core.validation.support.ReferenceValueResolver;
 
@@ -36,66 +36,68 @@ public final class ReferenceIntegrityRule implements ValidationRule {
     @Override
     public List<ValidationIssue> validate(ValidationContext context) {
         ArrayList<ValidationIssue> issues = new ArrayList<>();
-        for (DocumentEntry entry : DocumentEntries.ofType(
-                context,
-                ReferenceObject.class)) {
-            ReferenceObject<?> reference = (ReferenceObject<?>) entry.value();
-            if (reference.getRef() == null) {
+        ReferenceIndex index =
+                new ReferenceIndexBuilder(context.navigator()).build(context.document());
+        for (ReferenceUsage usage : index.references()) {
+            if (usage instanceof UnresolvedReferenceUsage unresolvedReference) {
+                issues.add(issueForFailure(
+                        unresolvedReference.failure(),
+                        unresolvedReference.sourcePath()));
                 continue;
             }
-            Optional<Class<?>> expectedType =
-                    ReferenceExpectedTypeResolver.resolve(context, entry.path());
-            validateReference(
+
+            ResolvedReferenceUsage resolvedReference =
+                    (ResolvedReferenceUsage) usage;
+            validateResolvedReference(
                     context,
-                    reference.getRef(),
-                    expectedType,
-                    entry.path().child("$ref"),
+                    resolvedReference,
+                    expectedType(context, resolvedReference.sourcePath()),
                     issues);
-        }
-        for (DocumentEntry entry : DocumentEntries.ofType(
-                context,
-                SchemaDefinition.class)) {
-            SchemaDefinition schema = (SchemaDefinition) entry.value();
-            if (schema.getRef() != null) {
-                validateReference(
-                        context,
-                        schema.getRef(),
-                        Optional.of(Schema.class),
-                        entry.path().child("$ref"),
-                        issues);
-            }
-        }
-        for (DocumentEntry entry : DocumentEntries.ofType(context, PathItem.class)) {
-            PathItem pathItem = (PathItem) entry.value();
-            if (pathItem.getRef() != null) {
-                validateReference(
-                        context,
-                        pathItem.getRef(),
-                        Optional.of(PathItem.class),
-                        entry.path().child("$ref"),
-                        issues);
-            }
         }
         return List.copyOf(issues);
     }
 
-    private static void validateReference(
+    private static Optional<Class<?>> expectedType(
             ValidationContext context,
-            UriReference reference,
-            Optional<Class<?>> expectedType,
-            ru.luttsev.studio.core.navigation.DocumentPath path,
-            List<ValidationIssue> issues) {
-        ReferenceResolution<Object> resolution =
-                context.referenceResolver().resolve(context.document(), reference);
-        if (resolution instanceof UnresolvedReference<Object> unresolved) {
-            issues.add(issueForFailure(unresolved.failure(), path));
-            return;
+            DocumentPath referencePath) {
+        Optional<DocumentPath> ownerPath = referencePath.parent();
+        if (ownerPath.isEmpty()) {
+            return Optional.empty();
         }
 
+        Optional<Object> owner =
+                context.navigator().find(context.document(), ownerPath.orElseThrow());
+        if (owner.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Object ownerValue = owner.orElseThrow();
+        if (ownerValue instanceof SchemaDefinition) {
+            return Optional.of(Schema.class);
+        }
+        if (ownerValue instanceof PathItem) {
+            return Optional.of(PathItem.class);
+        }
+        if (ownerValue instanceof ReferenceObject<?>) {
+            return ReferenceExpectedTypeResolver.resolve(
+                    context,
+                    ownerPath.orElseThrow());
+        }
+        return Optional.empty();
+    }
+
+    private static void validateResolvedReference(
+            ValidationContext context,
+            ResolvedReferenceUsage reference,
+            Optional<Class<?>> expectedType,
+            List<ValidationIssue> issues) {
         if (expectedType.isEmpty()) {
             return;
         }
-        Object target = ((ResolvedReference<Object>) resolution).value();
+
+        Object target = context.navigator()
+                .find(context.document(), reference.targetPath())
+                .orElseThrow();
         Class<?> targetType = expectedType.orElseThrow();
         if (targetType.isInstance(target)
                 || target instanceof ReferenceObject<?>) {
@@ -103,19 +105,19 @@ public final class ReferenceIntegrityRule implements ValidationRule {
         }
 
         ReferenceValueResolver resolver = new ReferenceValueResolver(context);
-        if (resolver.resolve(reference, targetType).isEmpty()) {
+        if (resolver.resolve(reference.reference(), targetType).isEmpty()) {
             issues.add(new ValidationIssue(
                     TYPE_MISMATCH,
                     ValidationSeverity.ERROR,
                     "Reference target has an unexpected type; expected "
                             + targetType.getSimpleName(),
-                    path));
+                    reference.sourcePath()));
         }
     }
 
     private static ValidationIssue issueForFailure(
             ReferenceFailure failure,
-            ru.luttsev.studio.core.navigation.DocumentPath path) {
+            DocumentPath path) {
         return switch (failure) {
             case EXTERNAL_REFERENCE, UNSUPPORTED_ANCHOR -> new ValidationIssue(
                     UNCHECKED_REFERENCE,
