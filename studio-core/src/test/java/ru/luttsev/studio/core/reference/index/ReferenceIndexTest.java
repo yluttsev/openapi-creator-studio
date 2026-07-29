@@ -29,17 +29,22 @@ class ReferenceIndexTest {
     void indexesResolvedReferencesInBothDirections() {
         OpenApiDocument document = document();
         SchemaDefinition user = new SchemaDefinition();
+        user.getProperties().put("id", new SchemaDefinition());
         SchemaDefinition order = referenceTo("#/components/schemas/User");
+        SchemaDefinition userId =
+                referenceTo("#/components/schemas/User/properties/id");
         document.getComponents().getSchemas().put("User", user);
         document.getComponents().getSchemas().put("Order", order);
+        document.getComponents().getSchemas().put("UserId", userId);
 
         ReferenceIndex index = builder.build(document);
         DocumentPath userPath = DocumentPath.parse("/components/schemas/User");
         DocumentPath orderPath = DocumentPath.parse("/components/schemas/Order");
         DocumentPath sourcePath = orderPath.child("$ref");
 
-        assertEquals(1, index.references().size());
+        assertEquals(2, index.references().size());
         assertEquals(1, index.usagesOf(userPath).size());
+        assertEquals(2, index.usagesOfSubtree(userPath).size());
         assertEquals(sourcePath, index.usagesOf(userPath).getFirst().sourcePath());
         assertEquals(
                 userPath,
