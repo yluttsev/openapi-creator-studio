@@ -12,7 +12,7 @@ class SchemaDefinitionTest {
 
     @Test
     void initializesCollectionsAsEmpty() {
-        var schema = new SchemaDefinition();
+        SchemaDefinition schema = new SchemaDefinition();
 
         assertTrue(schema.getTypes().isEmpty());
         assertTrue(schema.getExamples().isEmpty());
@@ -27,10 +27,10 @@ class SchemaDefinitionTest {
 
     @Test
     void buildsNestedObjectSchema() {
-        var nameSchema = new SchemaDefinition();
+        SchemaDefinition nameSchema = new SchemaDefinition();
         nameSchema.setTypes(Set.of(JsonType.STRING));
 
-        var userSchema = new SchemaDefinition();
+        SchemaDefinition userSchema = new SchemaDefinition();
         userSchema.setTypes(Set.of(JsonType.OBJECT));
         userSchema.getProperties().put("name", nameSchema);
         userSchema.getRequired().add("name");

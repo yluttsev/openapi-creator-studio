@@ -15,11 +15,11 @@ class DocumentValueTest {
 
     @Test
     void createsNestedDocumentValue() {
-        var roles = new ArrayValue(List.of(
+        ArrayValue roles = new ArrayValue(List.of(
                 new StringValue("USER"),
                 new StringValue("ADMIN")
         ));
-        var user = new ObjectValue(Map.of(
+        ObjectValue user = new ObjectValue(Map.of(
                 "name", new StringValue("Ivan"),
                 "age", new NumberValue(new BigDecimal("25")),
                 "active", new BooleanValue(true),
@@ -34,13 +34,13 @@ class DocumentValueTest {
 
     @Test
     void protectsArrayAndObjectValuesFromMutation() {
-        var sourceList = new ArrayList<DocumentValue>();
+        ArrayList<DocumentValue> sourceList = new ArrayList<>();
         sourceList.add(new StringValue("first"));
-        var arrayValue = new ArrayValue(sourceList);
+        ArrayValue arrayValue = new ArrayValue(sourceList);
 
-        var sourceMap = new LinkedHashMap<String, DocumentValue>();
+        LinkedHashMap<String, DocumentValue> sourceMap = new LinkedHashMap<>();
         sourceMap.put("items", arrayValue);
-        var objectValue = new ObjectValue(sourceMap);
+        ObjectValue objectValue = new ObjectValue(sourceMap);
 
         sourceList.add(new StringValue("second"));
         sourceMap.clear();

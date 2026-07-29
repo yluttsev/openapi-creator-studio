@@ -11,11 +11,11 @@ public final class OpenApiDocumentFactory {
     public OpenApiDocument create(NewDocumentParameters parameters) {
         Objects.requireNonNull(parameters, "parameters must not be null");
 
-        var info = new Info();
+        Info info = new Info();
         info.setTitle(parameters.title());
         info.setVersion(parameters.apiVersion());
 
-        var document = new OpenApiDocument();
+        OpenApiDocument document = new OpenApiDocument();
         document.setOpenApiVersion(parameters.openApiVersion());
         document.setInfo(info);
         document.setPaths(new Paths());

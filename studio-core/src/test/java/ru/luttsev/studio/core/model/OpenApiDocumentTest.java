@@ -23,46 +23,46 @@ class OpenApiDocumentTest {
 
     @Test
     void buildsCompleteDocumentGraph() {
-        var userSchema = new SchemaDefinition();
+        SchemaDefinition userSchema = new SchemaDefinition();
         userSchema.setTypes(Set.of(JsonType.OBJECT));
 
-        var nameSchema = new SchemaDefinition();
+        SchemaDefinition nameSchema = new SchemaDefinition();
         nameSchema.setTypes(Set.of(JsonType.STRING));
         userSchema.getProperties().put("name", nameSchema);
         userSchema.getRequired().add("name");
 
-        var userReference = new SchemaDefinition();
+        SchemaDefinition userReference = new SchemaDefinition();
         userReference.setRef(new UriReference("#/components/schemas/User"));
 
-        var responseMediaType = new MediaType();
+        MediaType responseMediaType = new MediaType();
         responseMediaType.setSchema(userReference);
 
-        var okResponse = new ApiResponse();
+        ApiResponse okResponse = new ApiResponse();
         okResponse.setDescription("User found");
         okResponse.getContent().put(
                 MediaTypeName.APPLICATION_JSON,
                 new InlineObject<>(responseMediaType));
 
-        var getUser = new Operation();
+        Operation getUser = new Operation();
         getUser.setOperationId("getUser");
         getUser.getResponses().put(
                 new ResponseKey("200"),
                 new InlineObject<>(okResponse));
 
-        var userPath = new PathItem();
+        PathItem userPath = new PathItem();
         userPath.getOperations().put(HttpMethod.GET, getUser);
 
-        var paths = new Paths();
+        Paths paths = new Paths();
         paths.getItems().put("/users/{id}", userPath);
 
-        var components = new Components();
+        Components components = new Components();
         components.getSchemas().put("User", userSchema);
 
-        var info = new Info();
+        Info info = new Info();
         info.setTitle("Users API");
         info.setVersion("1.0.0");
 
-        var document = new OpenApiDocument();
+        OpenApiDocument document = new OpenApiDocument();
         document.setOpenApiVersion(OpenApiVersion.V3_1_2);
         document.setInfo(info);
         document.setPaths(paths);
