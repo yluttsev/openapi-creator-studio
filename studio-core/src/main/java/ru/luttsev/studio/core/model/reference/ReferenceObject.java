@@ -9,7 +9,8 @@ import ru.luttsev.studio.core.model.schema.UriReference;
 @Getter
 @Setter
 @NoArgsConstructor
-public final class ReferenceObject<T> extends ExtensibleObject implements ReferenceOr<T> {
+public final class ReferenceObject<T> extends ExtensibleObject
+        implements ReferenceOr<T>, ReferenceHolder {
 
     private UriReference ref;
     private String summary;
