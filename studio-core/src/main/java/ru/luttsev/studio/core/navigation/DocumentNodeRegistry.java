@@ -38,9 +38,4 @@ final class DocumentNodeRegistry {
         }
     }
 
-    @FunctionalInterface
-    private interface RegisteredMapping {
-
-        void collect(Object node, ChildrenCollector children);
-    }
 }

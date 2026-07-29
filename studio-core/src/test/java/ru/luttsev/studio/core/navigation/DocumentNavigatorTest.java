@@ -178,10 +178,4 @@ class DocumentNavigatorTest {
 
         return new DocumentFixture(document, operation, nameSchema);
     }
-
-    private record DocumentFixture(
-            OpenApiDocument document,
-            Operation operation,
-            SchemaDefinition nameSchema) {
-    }
 }
