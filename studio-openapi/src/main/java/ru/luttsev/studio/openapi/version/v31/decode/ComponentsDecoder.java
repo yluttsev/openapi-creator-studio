@@ -15,11 +15,17 @@ final class ComponentsDecoder {
             "parameters",
             "examples",
             "requestBodies",
-            "headers");
+            "headers",
+            "securitySchemes",
+            "links");
 
     private final SchemaDecoder schemaDecoder = new SchemaDecoder();
     private final PayloadDecoder payloadDecoder =
             new PayloadDecoder(schemaDecoder);
+    private final ReferenceOrDecoder referenceOrDecoder =
+            new ReferenceOrDecoder();
+    private final SecuritySchemeDecoder securitySchemeDecoder =
+            new SecuritySchemeDecoder();
 
     Components decode(ObjectValue source, DecodeContext context) {
         ObjectValueReader reader = new ObjectValueReader(source, context);
@@ -46,6 +52,13 @@ final class ComponentsDecoder {
         components.setHeaders(payloadDecoder.decodeHeaders(
                 reader.optionalObject("headers"),
                 context.child("headers")));
+        components.setSecuritySchemes(referenceOrDecoder.decodeMap(
+                reader.optionalObject("securitySchemes"),
+                context.child("securitySchemes"),
+                securitySchemeDecoder::decode));
+        components.setLinks(payloadDecoder.decodeLinks(
+                reader.optionalObject("links"),
+                context.child("links")));
         AdditionalFieldsMapper.copy(source, components, MAPPED_FIELDS);
         return components;
     }

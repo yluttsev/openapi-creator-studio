@@ -7,7 +7,7 @@ import ru.luttsev.studio.core.model.value.ObjectValue;
 final class ApiResponseDecoder {
 
     private static final Set<String> MAPPED_FIELDS =
-            Set.of("description", "headers", "content");
+            Set.of("description", "headers", "content", "links");
 
     ApiResponse decode(
             ObjectValue source,
@@ -22,6 +22,9 @@ final class ApiResponseDecoder {
         response.setContent(payloadDecoder.decodeContent(
                 reader.optionalObject("content"),
                 context.child("content")));
+        response.setLinks(payloadDecoder.decodeLinks(
+                reader.optionalObject("links"),
+                context.child("links")));
         AdditionalFieldsMapper.copy(source, response, MAPPED_FIELDS);
         return response;
     }

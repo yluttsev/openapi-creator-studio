@@ -272,7 +272,7 @@ class ComponentsPayloadDecoderTest {
                 response.getHeaders().get("X-Request-Id"));
         assertTrue(response.getContent().containsKey(
                 MediaTypeName.APPLICATION_JSON));
-        assertTrue(response.getLinks().isEmpty());
+        assertTrue(response.getLinks().containsKey("self"));
 
         ObjectValue componentsSource = assertInstanceOf(
                 ObjectValue.class,
@@ -283,9 +283,7 @@ class ComponentsPayloadDecoderTest {
         ObjectValue responseSource = assertInstanceOf(
                 ObjectValue.class,
                 responsesSource.values().get("UserResponse"));
-        assertSame(
-                responseSource.values().get("links"),
-                response.getAdditionalFields().get("links"));
+        assertNull(response.getAdditionalFields().get("links"));
         assertEquals(
                 new StringValue("user"),
                 response.getAdditionalFields().get("x-response-id"));
@@ -293,9 +291,8 @@ class ComponentsPayloadDecoderTest {
                 ReferenceObject.class,
                 components.getResponses().get("SharedResponse"));
 
-        assertSame(
-                componentsSource.values().get("securitySchemes"),
-                components.getAdditionalFields().get("securitySchemes"));
+        assertTrue(components.getSecuritySchemes().containsKey("ApiKey"));
+        assertNull(components.getAdditionalFields().get("securitySchemes"));
         assertNull(components.getAdditionalFields().get("examples"));
         assertNull(components.getAdditionalFields().get("parameters"));
         assertNull(components.getAdditionalFields().get("headers"));
