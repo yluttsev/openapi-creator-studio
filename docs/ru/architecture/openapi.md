@@ -3,8 +3,8 @@
 Язык: **Русский** · [English](../../en/architecture/openapi.md)
 
 Статус: публичные контракты, граница version adapter, syntax layer для
-YAML/JSON и определение версии реализованы на 2026-07-30. Структурная
-валидация и маппинг OpenAPI 3.1 запланированы.
+YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
+реализованы на 2026-07-30. Маппинг OpenAPI 3.1 запланирован.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -65,6 +65,8 @@ Sealed results:
 - `ExportSuccess` или `ExportFailure`;
 - `SyntaxSuccess<T>` или `SyntaxFailure<T>` для внутренней границы синтаксиса;
 - `DetectedVersion` или `VersionDetectionFailure` для определения версии;
+- `StructuralValidationSuccess` или `StructuralValidationFailure` для
+  структурной валидации;
 - `AdapterSuccess<T>` или `AdapterFailure<T>` для внутренней границы
   адаптера.
 
@@ -124,6 +126,25 @@ Syntax layer отклоняет пустой ввод, корень не-объ�
 поэтому корректно записанную будущую версию можно определить, а затем сообщить,
 что адаптера для неё нет.
 
+## Структурная валидация
+
+`OpenApiStructuralValidator` проверяет синтаксическое дерево до
+version-specific маппинга. `OpenApiStructuralSchemaRegistry` выбирает ровно
+один schema provider для определённой версии, поэтому поддержка OpenAPI 3.0 и
+3.2 будет добавляться отдельно.
+
+Текущий provider поддерживает все patch-версии OpenAPI 3.1. Он использует
+зафиксированный официальный ресурс `schema-base` от `2025-11-23` и базовый
+диалект OpenAPI 3.1, поэтому проверяются и Schema Objects, и остальная
+структура документа. Пользовательские значения `jsonSchemaDialect` не входят
+в первый релиз.
+
+Все схемы и их транзитивные OpenAPI-зависимости упакованы в приложение.
+Валидация детерминирована и не выполняет сетевых запросов во время работы.
+Скомпилированные схемы кешируются по ID корневой схемы. Ожидаемые нарушения
+возвращаются как стабильные diagnostics `openapi.structure.*` с
+`DocumentPath`; неподдерживаемая версия указывается по пути `/openapi`.
+
 ## Version adapters
 
 `OpenApiVersionAdapter` — стратегия для одного семейства версий. Она
@@ -143,10 +164,10 @@ Syntax layer отклоняет пустой ввод, корень не-объ�
 
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
-3. Orchestration импорта/экспорта.
-4. Зафиксированная структурная схема OpenAPI 3.1 и validator.
-5. OpenAPI 3.1 decoder.
-6. OpenAPI 3.1 encoder.
+3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
+4. OpenAPI 3.1 decoder.
+5. OpenAPI 3.1 encoder.
+6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.
 
@@ -156,8 +177,9 @@ Syntax layer отклоняет пустой ввод, корень не-объ�
 ## Тестирование
 
 Тесты фиксируют инварианты options, diagnostics, results, registry, строгого
-parsing, определения версии, точности чисел и round-trip JSON/YAML. Каждый
-следующий слой должен добавлять valid, invalid и round-trip fixtures.
+parsing, определения версии, структурной валидации, точности чисел и round-trip
+JSON/YAML. Каждый следующий слой должен добавлять valid, invalid и round-trip
+fixtures.
 
 Запуск:
 

@@ -13,6 +13,8 @@ import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 import ru.luttsev.studio.openapi.diagnostic.SourcePosition;
 import ru.luttsev.studio.openapi.format.OpenApiFormat;
 import ru.luttsev.studio.openapi.importing.ImportOptions;
+import ru.luttsev.studio.openapi.internal.jackson.JacksonDocumentValueMapper;
+import ru.luttsev.studio.openapi.internal.jackson.UnsupportedSyntaxValueException;
 import ru.luttsev.studio.openapi.result.SyntaxFailure;
 import ru.luttsev.studio.openapi.result.SyntaxResult;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;

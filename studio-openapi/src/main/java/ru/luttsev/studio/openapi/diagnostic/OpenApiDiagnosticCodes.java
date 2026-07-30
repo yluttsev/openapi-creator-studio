@@ -16,6 +16,10 @@ public final class OpenApiDiagnosticCodes {
             new DiagnosticCode("openapi.version.invalid-type");
     public static final DiagnosticCode INVALID_VERSION =
             new DiagnosticCode("openapi.version.invalid");
+    public static final DiagnosticCode INVALID_STRUCTURE =
+            new DiagnosticCode("openapi.structure.invalid");
+    public static final DiagnosticCode UNSUPPORTED_STRUCTURE_VERSION =
+            new DiagnosticCode("openapi.structure.unsupported-version");
     public static final DiagnosticCode SERIALIZATION_FAILED =
             new DiagnosticCode("openapi.serialization.failed");
 
