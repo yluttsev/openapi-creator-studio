@@ -3,8 +3,8 @@
 Language: **English** · [Русский](../../ru/architecture/openapi.md)
 
 Status: public contracts, the version adapter boundary, the YAML/JSON syntax
-layer, and version detection are implemented as of 2026-07-30. Structural
-validation and OpenAPI 3.1 mapping are planned.
+layer, version detection, and OpenAPI 3.1 structural validation are
+implemented as of 2026-07-30. OpenAPI 3.1 mapping is planned.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -66,6 +66,8 @@ The sealed results are:
 - `ExportSuccess` or `ExportFailure`;
 - `SyntaxSuccess<T>` or `SyntaxFailure<T>` for the internal syntax boundary;
 - `DetectedVersion` or `VersionDetectionFailure` for version detection;
+- `StructuralValidationSuccess` or `StructuralValidationFailure` for
+  structural validation;
 - `AdapterSuccess<T>` or `AdapterFailure<T>` for the internal adapter
   boundary.
 
@@ -125,6 +127,23 @@ error diagnostic at `/openapi`. Detection does not decide whether the version
 is supported. That decision belongs to `OpenApiVersionAdapterRegistry`, so a
 well-formed future version can be detected and then rejected as unsupported.
 
+## Structural validation
+
+`OpenApiStructuralValidator` validates the syntax tree before version-specific
+mapping. `OpenApiStructuralSchemaRegistry` selects exactly one schema provider
+for the detected version, which keeps support for OpenAPI 3.0 and 3.2 additive.
+
+The current provider supports every OpenAPI 3.1 patch release. It uses the
+pinned `2025-11-23` official `schema-base` resource and the OpenAPI 3.1 base
+dialect, so Schema Objects are validated as well as the rest of the document.
+Custom `jsonSchemaDialect` values are outside the first-release scope.
+
+All schema resources and their transitive OpenAPI dialect dependencies are
+packaged in the application. Validation is deterministic and performs no
+runtime network requests. Compiled schemas are cached by root schema ID.
+Expected violations become stable `openapi.structure.*` diagnostics with
+`DocumentPath`; unsupported versions are reported at `/openapi`.
+
 ## Version adapters
 
 `OpenApiVersionAdapter` is the strategy for one version family. It declares
@@ -145,10 +164,10 @@ the module.
 
 1. YAML/JSON syntax layer. Implemented.
 2. Version detector. Implemented.
-3. Import/export orchestration.
-4. Pinned OpenAPI 3.1 structural schema and validator.
-5. OpenAPI 3.1 decoder.
-6. OpenAPI 3.1 encoder.
+3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
+4. OpenAPI 3.1 decoder.
+5. OpenAPI 3.1 encoder.
+6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.
 
@@ -158,8 +177,8 @@ downloaded at application runtime.
 ## Testing
 
 Tests enforce option, diagnostic, result, registry, strict syntax, version
-detection, numeric precision, and JSON/YAML round-trip invariants. Each later
-layer must add valid, invalid, and round-trip fixtures.
+detection, structural validation, numeric precision, and JSON/YAML round-trip
+invariants. Each later layer must add valid, invalid, and round-trip fixtures.
 
 Run:
 
