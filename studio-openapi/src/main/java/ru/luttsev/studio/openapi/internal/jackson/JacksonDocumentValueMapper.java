@@ -1,4 +1,4 @@
-package ru.luttsev.studio.openapi.syntax;
+package ru.luttsev.studio.openapi.internal.jackson;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,11 +16,11 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
-final class JacksonDocumentValueMapper {
+public final class JacksonDocumentValueMapper {
 
     private static final JsonNodeFactory NODE_FACTORY = JsonNodeFactory.instance;
 
-    DocumentValue fromJsonNode(JsonNode node) {
+    public DocumentValue fromJsonNode(JsonNode node) {
         if (node.isObject()) {
             return fromObjectNode(node);
         }
@@ -43,7 +43,7 @@ final class JacksonDocumentValueMapper {
                 "Unsupported syntax value type: " + node.getNodeType());
     }
 
-    JsonNode toJsonNode(DocumentValue value) {
+    public JsonNode toJsonNode(DocumentValue value) {
         return switch (value) {
             case ObjectValue objectValue -> toObjectNode(objectValue);
             case ArrayValue arrayValue -> toArrayNode(arrayValue);
