@@ -9,9 +9,17 @@ import ru.luttsev.studio.core.model.value.ObjectValue;
 
 final class ComponentsDecoder {
 
-    private static final Set<String> MAPPED_FIELDS = Set.of("schemas");
+    private static final Set<String> MAPPED_FIELDS = Set.of(
+            "schemas",
+            "responses",
+            "parameters",
+            "examples",
+            "requestBodies",
+            "headers");
 
     private final SchemaDecoder schemaDecoder = new SchemaDecoder();
+    private final PayloadDecoder payloadDecoder =
+            new PayloadDecoder(schemaDecoder);
 
     Components decode(ObjectValue source, DecodeContext context) {
         ObjectValueReader reader = new ObjectValueReader(source, context);
@@ -23,6 +31,21 @@ final class ComponentsDecoder {
                     components,
                     context.child("schemas"));
         }
+        components.setResponses(payloadDecoder.decodeResponses(
+                reader.optionalObject("responses"),
+                context.child("responses")));
+        components.setParameters(payloadDecoder.decodeParameters(
+                reader.optionalObject("parameters"),
+                context.child("parameters")));
+        components.setExamples(payloadDecoder.decodeExamples(
+                reader.optionalObject("examples"),
+                context.child("examples")));
+        components.setRequestBodies(payloadDecoder.decodeRequestBodies(
+                reader.optionalObject("requestBodies"),
+                context.child("requestBodies")));
+        components.setHeaders(payloadDecoder.decodeHeaders(
+                reader.optionalObject("headers"),
+                context.child("headers")));
         AdditionalFieldsMapper.copy(source, components, MAPPED_FIELDS);
         return components;
     }
