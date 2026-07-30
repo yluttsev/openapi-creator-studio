@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.core.model.OpenApiDocument;
+import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.navigation.DocumentPath;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticCode;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
@@ -32,12 +33,16 @@ class ResultContractTest {
         SyntaxSuccess<String> syntaxResult = new SyntaxSuccess<>(
                 "parsed",
                 source);
+        DetectedVersion versionResult = new DetectedVersion(
+                OpenApiVersion.V3_1_2,
+                source);
         source.clear();
 
         assertEquals(1, importResult.diagnostics().size());
         assertEquals(1, exportResult.diagnostics().size());
         assertEquals(1, adapterResult.diagnostics().size());
         assertEquals(1, syntaxResult.diagnostics().size());
+        assertEquals(1, versionResult.diagnostics().size());
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> importResult.diagnostics().clear());
@@ -67,6 +72,11 @@ class ResultContractTest {
                 () -> new SyntaxSuccess<>(
                         "parsed",
                         diagnostics));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DetectedVersion(
+                        OpenApiVersion.V3_1_2,
+                        diagnostics));
     }
 
     @Test
@@ -86,11 +96,17 @@ class ResultContractTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new SyntaxFailure<>(warnings));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new VersionDetectionFailure(warnings));
 
         assertEquals(errors, new ImportFailure(errors).diagnostics());
         assertEquals(errors, new ExportFailure(errors).diagnostics());
         assertEquals(errors, new AdapterFailure<>(errors).diagnostics());
         assertEquals(errors, new SyntaxFailure<>(errors).diagnostics());
+        assertEquals(
+                errors,
+                new VersionDetectionFailure(errors).diagnostics());
     }
 
     @Test
