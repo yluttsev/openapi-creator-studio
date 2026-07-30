@@ -36,6 +36,8 @@ class ResultContractTest {
         DetectedVersion versionResult = new DetectedVersion(
                 OpenApiVersion.V3_1_2,
                 source);
+        StructuralValidationSuccess structuralValidationResult =
+                new StructuralValidationSuccess(source);
         source.clear();
 
         assertEquals(1, importResult.diagnostics().size());
@@ -43,6 +45,9 @@ class ResultContractTest {
         assertEquals(1, adapterResult.diagnostics().size());
         assertEquals(1, syntaxResult.diagnostics().size());
         assertEquals(1, versionResult.diagnostics().size());
+        assertEquals(
+                1,
+                structuralValidationResult.diagnostics().size());
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> importResult.diagnostics().clear());
@@ -77,6 +82,9 @@ class ResultContractTest {
                 () -> new DetectedVersion(
                         OpenApiVersion.V3_1_2,
                         diagnostics));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new StructuralValidationSuccess(diagnostics));
     }
 
     @Test
@@ -99,6 +107,9 @@ class ResultContractTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new VersionDetectionFailure(warnings));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new StructuralValidationFailure(warnings));
 
         assertEquals(errors, new ImportFailure(errors).diagnostics());
         assertEquals(errors, new ExportFailure(errors).diagnostics());
@@ -107,6 +118,9 @@ class ResultContractTest {
         assertEquals(
                 errors,
                 new VersionDetectionFailure(errors).diagnostics());
+        assertEquals(
+                errors,
+                new StructuralValidationFailure(errors).diagnostics());
     }
 
     @Test
