@@ -1,0 +1,210 @@
+package ru.luttsev.studio.openapi.version.v31.decode;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+import ru.luttsev.studio.core.model.OpenApiDocument;
+import ru.luttsev.studio.core.model.OpenApiVersion;
+import ru.luttsev.studio.core.model.info.Contact;
+import ru.luttsev.studio.core.model.info.Info;
+import ru.luttsev.studio.core.model.info.License;
+import ru.luttsev.studio.core.model.value.ObjectValue;
+import ru.luttsev.studio.core.model.value.StringValue;
+import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
+import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnostic;
+import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
+import ru.luttsev.studio.openapi.importing.ImportOptions;
+import ru.luttsev.studio.openapi.result.AdapterFailure;
+import ru.luttsev.studio.openapi.result.AdapterResult;
+import ru.luttsev.studio.openapi.result.AdapterSuccess;
+import ru.luttsev.studio.openapi.result.SyntaxSuccess;
+import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
+import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+
+class OpenApi31DecoderTest {
+
+    private final OpenApi31Decoder decoder = new OpenApi31Decoder();
+
+    @Test
+    void decodesRootInfoContactAndLicense() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+                info:
+                  title: Example API
+                  summary: Short description
+                  description: Full description
+                  termsOfService: https://example.com/terms
+                  version: 1.4.0
+                  contact:
+                    name: API Team
+                    url: https://example.com/contact
+                    email: api@example.com
+                    x-contact-id: team-1
+                  license:
+                    name: Apache 2.0
+                    identifier: Apache-2.0
+                    x-license-scope: public
+                  x-info-id: example
+                paths: {}
+                x-root-id: root-value
+                """);
+
+        OpenApiDocument document = successValue(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+
+        assertEquals(OpenApiVersion.V3_1_2, document.getOpenApiVersion());
+        assertEquals(
+                "https://spec.openapis.org/oas/3.1/dialect/base",
+                document.getJsonSchemaDialect().value());
+
+        Info info = document.getInfo();
+        assertEquals("Example API", info.getTitle());
+        assertEquals("Short description", info.getSummary());
+        assertEquals("Full description", info.getDescription());
+        assertEquals(
+                "https://example.com/terms",
+                info.getTermsOfService().value());
+        assertEquals("1.4.0", info.getVersion());
+        assertEquals(
+                new StringValue("example"),
+                info.getAdditionalFields().get("x-info-id"));
+
+        Contact contact = info.getContact();
+        assertEquals("API Team", contact.getName());
+        assertEquals(
+                "https://example.com/contact",
+                contact.getUrl().value());
+        assertEquals("api@example.com", contact.getEmail());
+        assertEquals(
+                new StringValue("team-1"),
+                contact.getAdditionalFields().get("x-contact-id"));
+
+        License license = info.getLicense();
+        assertEquals("Apache 2.0", license.getName());
+        assertEquals("Apache-2.0", license.getIdentifier());
+        assertNull(license.getUrl());
+        assertEquals(
+                new StringValue("public"),
+                license.getAdditionalFields().get("x-license-scope"));
+
+        assertSame(source.values().get("paths"),
+                document.getAdditionalFields().get("paths"));
+        assertEquals(
+                new StringValue("root-value"),
+                document.getAdditionalFields().get("x-root-id"));
+    }
+
+    @Test
+    void reportsMissingRequiredNestedField() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                info:
+                  version: 1.0.0
+                paths: {}
+                """);
+
+        OpenApiDiagnostic diagnostic = singleFailureDiagnostic(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+
+        assertEquals(
+                OpenApiDiagnosticCodes.MAPPING_MISSING_REQUIRED_FIELD,
+                diagnostic.code());
+        assertEquals("/info/title", diagnostic.path().toPointer());
+    }
+
+    @Test
+    void reportsNestedTypeMismatch() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                info:
+                  title: Example API
+                  version: 1.0.0
+                  contact: invalid
+                paths: {}
+                """);
+
+        OpenApiDiagnostic diagnostic = singleFailureDiagnostic(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+
+        assertEquals(
+                OpenApiDiagnosticCodes.MAPPING_TYPE_MISMATCH,
+                diagnostic.code());
+        assertEquals("/info/contact", diagnostic.path().toPointer());
+    }
+
+    @Test
+    void reportsMismatchBetweenDetectedAndDeclaredVersion() {
+        ObjectValue source = parse("""
+                openapi: 3.1.0
+                info:
+                  title: Example API
+                  version: 1.0.0
+                paths: {}
+                """);
+
+        OpenApiDiagnostic diagnostic = singleFailureDiagnostic(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+
+        assertEquals(
+                OpenApiDiagnosticCodes.MAPPING_VERSION_MISMATCH,
+                diagnostic.code());
+        assertEquals("/openapi", diagnostic.path().toPointer());
+    }
+
+    @Test
+    void rejectsUnsupportedVersionFamily() {
+        ObjectValue source = parse("""
+                openapi: 3.0.4
+                info:
+                  title: Example API
+                  version: 1.0.0
+                paths: {}
+                """);
+
+        OpenApiDiagnostic diagnostic = singleFailureDiagnostic(
+                decoder.decode(source, OpenApiVersion.V3_0_4));
+
+        assertEquals(
+                OpenApiDiagnosticCodes.UNSUPPORTED_MAPPING_VERSION,
+                diagnostic.code());
+        assertEquals("/openapi", diagnostic.path().toPointer());
+    }
+
+    private static OpenApiDocument successValue(
+            AdapterResult<OpenApiDocument> result) {
+        AdapterSuccess<?> success = assertInstanceOf(
+                AdapterSuccess.class,
+                result);
+        assertTrue(success.diagnostics().isEmpty());
+        return assertInstanceOf(
+                OpenApiDocument.class,
+                success.value());
+    }
+
+    private static OpenApiDiagnostic singleFailureDiagnostic(
+            AdapterResult<OpenApiDocument> result) {
+        AdapterFailure<?> failure = assertInstanceOf(
+                AdapterFailure.class,
+                result);
+        assertEquals(1, failure.diagnostics().size());
+        OpenApiDiagnostic diagnostic = failure.diagnostics().getFirst();
+        assertEquals(DiagnosticPhase.MAPPING, diagnostic.phase());
+        return diagnostic;
+    }
+
+    private static ObjectValue parse(String content) {
+        JacksonOpenApiSyntaxCodec codec = new JacksonOpenApiSyntaxCodec();
+        SyntaxSuccess<?> success = assertInstanceOf(
+                SyntaxSuccess.class,
+                codec.parse(content, ImportOptions.autoDetect()));
+        ParsedDocument parsedDocument = assertInstanceOf(
+                ParsedDocument.class,
+                success.value());
+        return parsedDocument.root();
+    }
+}
