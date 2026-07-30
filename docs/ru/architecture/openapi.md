@@ -5,7 +5,8 @@
 Статус: публичные контракты, граница version adapter, syntax layer для
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-07-30. Foundation decoder OpenAPI 3.1 и маппинг
-root/info реализованы; остальной маппинг находится в работе.
+root/info и `components.schemas` реализованы; остальной маппинг находится в
+работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -175,16 +176,24 @@ diagnostics для всех дочерних контекстов. `ObjectValueR
 которое ещё не было обработано decoder.
 
 Текущий вертикальный срез охватывает корневую версию, `jsonSchemaDialect`,
-`Info`, `Contact` и `License`. Стандартные корневые поля, маппинг которых ещё
-не реализован, временно сохраняются в `OpenApiDocument.additionalFields`;
-по мере расширения decoder они перейдут в типизированные поля core.
+`Info`, `Contact`, `License` и `components.schemas`. `SchemaDecoder`
+рекурсивно преобразует логические и объектные схемы, включая properties,
+items, ограничения, композицию, discriminator, ссылки и неизвестные ключевые
+слова JSON Schema. Одиночный `example` и массив `examples` нормализуются в
+список examples модели core.
+
+Секции components, маппинг которых ещё не реализован, временно сохраняются в
+`Components.additionalFields`. Остальные необработанные корневые поля остаются
+в `OpenApiDocument.additionalFields` и перейдут в типизированные поля core по
+мере расширения decoder.
 
 ## План реализации
 
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
-4. OpenAPI 3.1 decoder. В работе: foundation и root/info реализованы.
+4. OpenAPI 3.1 decoder. В работе: foundation, root/info и
+   `components.schemas` реализованы.
 5. OpenAPI 3.1 encoder.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
