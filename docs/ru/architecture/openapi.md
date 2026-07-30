@@ -4,7 +4,8 @@
 
 Статус: публичные контракты, граница version adapter, syntax layer для
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
-реализованы на 2026-07-30. Маппинг OpenAPI 3.1 запланирован.
+реализованы на 2026-07-30. Foundation decoder OpenAPI 3.1 и маппинг
+root/info реализованы; остальной маппинг находится в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -160,12 +161,30 @@ version-specific маппинга. `OpenApiStructuralSchemaRegistry` выбир�
 Первая реализация будет предназначена для OpenAPI 3.1.2. OpenAPI 3.0 и 3.2
 добавляются отдельными адаптерами, а не условными ветвлениями по всему модулю.
 
+## Decoder OpenAPI 3.1
+
+`OpenApi31Decoder` преобразует структурно валидный `ObjectValue` в
+нормализованный core `OpenApiDocument`. JSON Schema повторно не запускается.
+При прямом вызове decoder безопасное типизированное чтение всё равно вернёт
+mapping diagnostics вместо ошибки приведения типа.
+
+`DecodeContext` хранит текущий `DocumentPath` и использует общий сборщик
+diagnostics для всех дочерних контекстов. `ObjectValueReader` централизует
+типизированное чтение полей. Небольшие предметные decoders преобразуют
+отдельные семейства моделей, а `AdditionalFieldsMapper` сохраняет каждое поле,
+которое ещё не было обработано decoder.
+
+Текущий вертикальный срез охватывает корневую версию, `jsonSchemaDialect`,
+`Info`, `Contact` и `License`. Стандартные корневые поля, маппинг которых ещё
+не реализован, временно сохраняются в `OpenApiDocument.additionalFields`;
+по мере расширения decoder они перейдут в типизированные поля core.
+
 ## План реализации
 
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
-4. OpenAPI 3.1 decoder.
+4. OpenAPI 3.1 decoder. В работе: foundation и root/info реализованы.
 5. OpenAPI 3.1 encoder.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.

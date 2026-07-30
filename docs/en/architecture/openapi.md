@@ -4,7 +4,8 @@ Language: **English** · [Русский](../../ru/architecture/openapi.md)
 
 Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
-implemented as of 2026-07-30. OpenAPI 3.1 mapping is planned.
+implemented as of 2026-07-30. The OpenAPI 3.1 decoder foundation and
+root/info mapping are implemented; the remaining mapping is in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -160,12 +161,29 @@ The first implementation will target OpenAPI 3.1.2. OpenAPI 3.0 and 3.2 will
 be added as separate adapters rather than conditional branches spread across
 the module.
 
+## OpenAPI 3.1 decoder
+
+`OpenApi31Decoder` converts a structurally validated `ObjectValue` into the
+normalized core `OpenApiDocument`. It does not run JSON Schema validation
+again. Defensive typed reads still produce mapping diagnostics instead of
+unchecked cast failures when the decoder is called directly.
+
+`DecodeContext` carries the current `DocumentPath` and shares one diagnostic
+collector with all child contexts. `ObjectValueReader` centralizes typed
+field access. Small domain decoders map individual model families, while
+`AdditionalFieldsMapper` preserves every field not consumed by that decoder.
+
+The current vertical slice covers the root version, `jsonSchemaDialect`,
+`Info`, `Contact`, and `License`. Standard root fields that are not mapped yet
+are temporarily preserved in `OpenApiDocument.additionalFields`; they will
+move to their typed core fields as the decoder expands.
+
 ## Planned implementation sequence
 
 1. YAML/JSON syntax layer. Implemented.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
-4. OpenAPI 3.1 decoder.
+4. OpenAPI 3.1 decoder. In progress: foundation and root/info implemented.
 5. OpenAPI 3.1 encoder.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
