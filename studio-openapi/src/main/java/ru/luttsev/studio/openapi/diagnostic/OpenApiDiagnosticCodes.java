@@ -10,6 +10,12 @@ public final class OpenApiDiagnosticCodes {
             new DiagnosticCode("openapi.syntax.root-not-object");
     public static final DiagnosticCode UNSUPPORTED_SYNTAX_VALUE =
             new DiagnosticCode("openapi.syntax.unsupported-value");
+    public static final DiagnosticCode MISSING_VERSION =
+            new DiagnosticCode("openapi.version.missing");
+    public static final DiagnosticCode INVALID_VERSION_TYPE =
+            new DiagnosticCode("openapi.version.invalid-type");
+    public static final DiagnosticCode INVALID_VERSION =
+            new DiagnosticCode("openapi.version.invalid");
     public static final DiagnosticCode SERIALIZATION_FAILED =
             new DiagnosticCode("openapi.serialization.failed");
 
