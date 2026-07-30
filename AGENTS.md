@@ -7,9 +7,13 @@ application.
 Documentation:
 
 - English: [`backend-context.md`](docs/en/backend-context.md) and
-  [`core.md`](docs/en/architecture/core.md);
+  architecture docs for
+  [`studio-core`](docs/en/architecture/core.md) and
+  [`studio-openapi`](docs/en/architecture/openapi.md);
 - Русский: [`backend-context.md`](docs/ru/backend-context.md) и
-  [`core.md`](docs/ru/architecture/core.md).
+  архитектура
+  [`studio-core`](docs/ru/architecture/core.md) и
+  [`studio-openapi`](docs/ru/architecture/openapi.md).
 
 Before changing the backend architecture or code, read the backend context in
 either language. For work in `studio-core`, also read the corresponding core

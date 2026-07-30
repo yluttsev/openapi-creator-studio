@@ -25,7 +25,7 @@ logic to YAML, JSON, HTTP, Spring, or a particular storage technology.
 | Module | Responsibility | Current state |
 | --- | --- | --- |
 | `studio-core` | In-memory document model, creation, navigation, references, semantic validation, and editing commands | Implemented and covered by tests |
-| `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | Module created; implementation planned |
+| `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | Public contracts and version adapter boundary implemented; syntax, schema validation, and 3.1 mapping planned |
 | `studio-app` | Spring Boot composition root, future REST API, application services, and infrastructure integration | Runnable Spring Boot application created; application architecture is not designed yet |
 
 Dependencies point inward:
@@ -37,8 +37,10 @@ studio-app -> studio-openapi -> studio-core
 
 `studio-core` knows nothing about the two outer modules.
 
-Detailed core documentation:
-[architecture/core.md](architecture/core.md).
+Detailed architecture documentation:
+
+- [architecture/core.md](architecture/core.md);
+- [architecture/openapi.md](architecture/openapi.md).
 
 ## OpenAPI version strategy
 
@@ -112,6 +114,10 @@ Temporarily invalid document states are allowed during visual editing.
 Validation reports issues but does not mutate the document. Commands reject
 only actions that cannot be performed safely or unambiguously.
 
+Import is stricter than interactive editing. Any parsing, structural, mapping,
+or semantic error produces `ImportFailure` and no document is returned.
+Warnings do not block an import.
+
 ## Storage and document size
 
 For the first release, the entire document lives in memory. Core contains no
@@ -142,7 +148,8 @@ and application services have not been defined yet.
 
 ## Deferred decisions
 
-- exact parser and serializer architecture in `studio-openapi`;
+- parser and serializer implementation and library selection in
+  `studio-openapi`;
 - REST API and DTO shape;
 - document sessions, persistence, and concurrent editing;
 - undo/redo and command history;
