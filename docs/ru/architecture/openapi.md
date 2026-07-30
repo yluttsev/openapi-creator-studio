@@ -5,8 +5,8 @@
 Статус: публичные контракты, граница version adapter, syntax layer для
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-07-30. Foundation decoder OpenAPI 3.1 и маппинг
-root/info и `components.schemas` реализованы; остальной маппинг находится в
-работе.
+root/info, `components.schemas` и общих payload-компонентов реализованы;
+остальной маппинг находится в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -176,11 +176,19 @@ diagnostics для всех дочерних контекстов. `ObjectValueR
 которое ещё не было обработано decoder.
 
 Текущий вертикальный срез охватывает корневую версию, `jsonSchemaDialect`,
-`Info`, `Contact`, `License` и `components.schemas`. `SchemaDecoder`
-рекурсивно преобразует логические и объектные схемы, включая properties,
-items, ограничения, композицию, discriminator, ссылки и неизвестные ключевые
-слова JSON Schema. Одиночный `example` и массив `examples` нормализуются в
-список examples модели core.
+`Info`, `Contact`, `License`, а также schema- и payload-секции `components`.
+`SchemaDecoder` рекурсивно преобразует логические и объектные схемы, включая
+properties, items, ограничения, композицию, discriminator, ссылки и
+неизвестные ключевые слова JSON Schema. Одиночный `example` и массив
+`examples` нормализуются в список examples модели core.
+
+Payload-слой преобразует Example, Parameter, Header, Request Body, Response,
+Media Type и Encoding Objects. Общий `ReferenceOrDecoder` различает inline-
+значения и Reference Objects, а `PayloadDecoder` координирует рекурсивный граф
+Media Type, Encoding и Header без циклических зависимостей конструкторов. В
+OpenAPI 3.1 media types декодируются внутри `content`;
+`components.mediaTypes` намеренно не принимается, потому что это поле более
+новой версии OpenAPI.
 
 Секции components, маппинг которых ещё не реализован, временно сохраняются в
 `Components.additionalFields`. Остальные необработанные корневые поля остаются
@@ -192,8 +200,8 @@ items, ограничения, композицию, discriminator, ссылки
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
-4. OpenAPI 3.1 decoder. В работе: foundation, root/info и
-   `components.schemas` реализованы.
+4. OpenAPI 3.1 decoder. В работе: foundation, root/info, schemas и общие
+   payload-компоненты реализованы.
 5. OpenAPI 3.1 encoder.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
