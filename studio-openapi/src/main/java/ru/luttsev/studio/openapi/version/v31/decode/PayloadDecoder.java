@@ -3,7 +3,7 @@ package ru.luttsev.studio.openapi.version.v31.decode;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
+import ru.luttsev.studio.core.model.link.Link;
 import ru.luttsev.studio.core.model.media.Encoding;
 import ru.luttsev.studio.core.model.media.Example;
 import ru.luttsev.studio.core.model.media.MediaType;
@@ -33,6 +33,7 @@ final class PayloadDecoder {
             new RequestBodyDecoder();
     private final ApiResponseDecoder apiResponseDecoder =
             new ApiResponseDecoder();
+    private final LinkDecoder linkDecoder = new LinkDecoder();
 
     PayloadDecoder(SchemaDecoder schemaDecoder) {
         this.schemaDecoder = Objects.requireNonNull(
@@ -49,46 +50,59 @@ final class PayloadDecoder {
     Map<String, ReferenceOr<Example>> decodeExamples(
             ObjectValue source,
             DecodeContext context) {
-        return decodeReferenceMap(
+        return referenceOrDecoder.decodeMap(
                 source,
                 context,
-                this::decodeExampleOrReference);
+                exampleDecoder::decode);
     }
 
     Map<String, ReferenceOr<Header>> decodeHeaders(
             ObjectValue source,
             DecodeContext context) {
-        return decodeReferenceMap(
+        return referenceOrDecoder.decodeMap(
                 source,
                 context,
-                this::decodeHeaderOrReference);
+                (object, childContext) ->
+                        headerDecoder.decode(object, childContext, this));
     }
 
     Map<String, ReferenceOr<Parameter>> decodeParameters(
             ObjectValue source,
             DecodeContext context) {
-        return decodeReferenceMap(
+        return referenceOrDecoder.decodeMap(
                 source,
                 context,
-                this::decodeParameterOrReference);
+                (object, childContext) ->
+                        parameterDecoder.decode(object, childContext, this));
     }
 
     Map<String, ReferenceOr<RequestBody>> decodeRequestBodies(
             ObjectValue source,
             DecodeContext context) {
-        return decodeReferenceMap(
+        return referenceOrDecoder.decodeMap(
                 source,
                 context,
-                this::decodeRequestBodyOrReference);
+                (object, childContext) ->
+                        requestBodyDecoder.decode(object, childContext, this));
     }
 
     Map<String, ReferenceOr<ApiResponse>> decodeResponses(
             ObjectValue source,
             DecodeContext context) {
-        return decodeReferenceMap(
+        return referenceOrDecoder.decodeMap(
                 source,
                 context,
-                this::decodeResponseOrReference);
+                (object, childContext) ->
+                        apiResponseDecoder.decode(object, childContext, this));
+    }
+
+    Map<String, ReferenceOr<Link>> decodeLinks(
+            ObjectValue source,
+            DecodeContext context) {
+        return referenceOrDecoder.decodeMap(
+                source,
+                context,
+                linkDecoder::decode);
     }
 
     Map<MediaTypeName, ReferenceOr<MediaType>> decodeContent(
@@ -135,55 +149,6 @@ final class PayloadDecoder {
         return encodings;
     }
 
-    private ReferenceOr<Example> decodeExampleOrReference(
-            DocumentValue source,
-            DecodeContext context) {
-        return referenceOrDecoder.decode(
-                source,
-                context,
-                exampleDecoder::decode);
-    }
-
-    private ReferenceOr<Header> decodeHeaderOrReference(
-            DocumentValue source,
-            DecodeContext context) {
-        return referenceOrDecoder.decode(
-                source,
-                context,
-                (object, childContext) ->
-                        headerDecoder.decode(object, childContext, this));
-    }
-
-    private ReferenceOr<Parameter> decodeParameterOrReference(
-            DocumentValue source,
-            DecodeContext context) {
-        return referenceOrDecoder.decode(
-                source,
-                context,
-                (object, childContext) ->
-                        parameterDecoder.decode(object, childContext, this));
-    }
-
-    private ReferenceOr<RequestBody> decodeRequestBodyOrReference(
-            DocumentValue source,
-            DecodeContext context) {
-        return referenceOrDecoder.decode(
-                source,
-                context,
-                (object, childContext) ->
-                        requestBodyDecoder.decode(object, childContext, this));
-    }
-
-    private ReferenceOr<ApiResponse> decodeResponseOrReference(
-            DocumentValue source,
-            DecodeContext context) {
-        return referenceOrDecoder.decode(
-                source,
-                context,
-                (object, childContext) ->
-                        apiResponseDecoder.decode(object, childContext, this));
-    }
-
     private ReferenceOr<MediaType> decodeInlineMediaType(
             DocumentValue source,
             DecodeContext context) {
@@ -193,26 +158,6 @@ final class PayloadDecoder {
         }
         return new InlineObject<>(
                 mediaTypeDecoder.decode(object, context, this));
-    }
-
-    private static <T> Map<String, ReferenceOr<T>> decodeReferenceMap(
-            ObjectValue source,
-            DecodeContext context,
-            BiFunction<DocumentValue, DecodeContext, ReferenceOr<T>> decoder) {
-        LinkedHashMap<String, ReferenceOr<T>> values = new LinkedHashMap<>();
-        if (source == null) {
-            return values;
-        }
-
-        for (Map.Entry<String, DocumentValue> entry : source.values().entrySet()) {
-            ReferenceOr<T> value = decoder.apply(
-                    entry.getValue(),
-                    context.child(entry.getKey()));
-            if (value != null) {
-                values.put(entry.getKey(), value);
-            }
-        }
-        return values;
     }
 
     private static ObjectValue asObject(
