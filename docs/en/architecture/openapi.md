@@ -2,9 +2,9 @@
 
 Language: **English** · [Русский](../../ru/architecture/openapi.md)
 
-Status: public contracts and version adapter boundary implemented as of
-2026-07-30. Parsing, structural validation, and OpenAPI 3.1 mapping are
-planned.
+Status: public contracts, the version adapter boundary, and the YAML/JSON
+syntax layer are implemented as of 2026-07-30. Version detection, structural
+validation, and OpenAPI 3.1 mapping are planned.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -64,6 +64,7 @@ The sealed results are:
 
 - `ImportSuccess` or `ImportFailure`;
 - `ExportSuccess` or `ExportFailure`;
+- `SyntaxSuccess<T>` or `SyntaxFailure<T>` for the internal syntax boundary;
 - `AdapterSuccess<T>` or `AdapterFailure<T>` for the internal adapter
   boundary.
 
@@ -97,6 +98,21 @@ the core `ObjectValue`, whose nested values are `DocumentValue`.
 This keeps parser replacement possible and lets unknown values move into
 `additionalFields` or `additionalKeywords` without losing their structure.
 
+`OpenApiSyntaxCodec` combines the parser and writer contracts. Its current
+implementation, `JacksonOpenApiSyntaxCodec`, uses Jackson 3.2.1 internally
+for strict JSON and YAML processing. Jackson types remain package-internal
+implementation details.
+
+An explicit `ImportOptions` format hint takes precedence. Without a hint,
+content beginning with `{` or `[` after an optional byte-order mark and
+whitespace is treated as JSON; other content is treated as YAML. Malformed
+JSON is not retried as YAML.
+
+The syntax layer rejects empty input, a non-object document root, duplicate
+properties, trailing content, and multiple YAML documents. Numbers are parsed
+without conversion through `double`. Serialization produces readable,
+deterministic JSON or YAML, but does not preserve source formatting.
+
 ## Version adapters
 
 `OpenApiVersionAdapter` is the strategy for one version family. It declares
@@ -115,7 +131,7 @@ the module.
 
 ## Planned implementation sequence
 
-1. YAML/JSON syntax layer.
+1. YAML/JSON syntax layer. Implemented.
 2. Version detector and import/export orchestration.
 3. Pinned OpenAPI 3.1 structural schema and validator.
 4. OpenAPI 3.1 decoder.
@@ -128,8 +144,9 @@ downloaded at application runtime.
 
 ## Testing
 
-Contract tests enforce option, diagnostic, result, and registry invariants.
-Each later layer must add valid, invalid, and round-trip fixtures.
+Tests enforce option, diagnostic, result, registry, strict syntax, numeric
+precision, and JSON/YAML round-trip invariants. Each later layer must add
+valid, invalid, and round-trip fixtures.
 
 Run:
 

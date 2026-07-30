@@ -2,9 +2,9 @@
 
 Язык: **Русский** · [English](../../en/architecture/openapi.md)
 
-Статус: публичные контракты и граница version adapter реализованы на
-2026-07-30. Parsing, структурная валидация и маппинг OpenAPI 3.1
-запланированы.
+Статус: публичные контракты, граница version adapter и syntax layer для
+YAML/JSON реализованы на 2026-07-30. Определение версии, структурная
+валидация и маппинг OpenAPI 3.1 запланированы.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -63,6 +63,7 @@ Sealed results:
 
 - `ImportSuccess` или `ImportFailure`;
 - `ExportSuccess` или `ExportFailure`;
+- `SyntaxSuccess<T>` или `SyntaxFailure<T>` для внутренней границы синтаксиса;
 - `AdapterSuccess<T>` или `AdapterFailure<T>` для внутренней границы
   адаптера.
 
@@ -96,6 +97,20 @@ Parser-specific типы, например Jackson `JsonNode`, не должны
 Это позволяет заменить parser и переносить неизвестные значения в
 `additionalFields` или `additionalKeywords` без потери их структуры.
 
+`OpenApiSyntaxCodec` объединяет контракты parser и writer. Текущая реализация
+`JacksonOpenApiSyntaxCodec` использует Jackson 3.2.1 для строгой обработки
+JSON и YAML. Типы Jackson остаются внутренними деталями реализации.
+
+Явный format hint из `ImportOptions` имеет приоритет. Без него содержимое,
+которое после необязательного byte-order mark и пробелов начинается с `{` или
+`[`, считается JSON; остальное считается YAML. Невалидный JSON не
+переинтерпретируется как YAML.
+
+Syntax layer отклоняет пустой ввод, корень не-объект, повторяющиеся поля,
+лишнее содержимое и несколько YAML-документов. Числа разбираются без
+промежуточного преобразования через `double`. Serialization создаёт читаемый
+и предсказуемый JSON или YAML, но не сохраняет исходное форматирование.
+
 ## Version adapters
 
 `OpenApiVersionAdapter` — стратегия для одного семейства версий. Она
@@ -113,7 +128,7 @@ Parser-specific типы, например Jackson `JsonNode`, не должны
 
 ## План реализации
 
-1. Syntax layer для YAML/JSON.
+1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector и orchestration импорта/экспорта.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator.
 4. OpenAPI 3.1 decoder.
@@ -126,8 +141,9 @@ Parser-specific типы, например Jackson `JsonNode`, не должны
 
 ## Тестирование
 
-Contract tests фиксируют инварианты options, diagnostics, results и registry.
-Каждый следующий слой должен добавлять valid, invalid и round-trip fixtures.
+Тесты фиксируют инварианты options, diagnostics, results, registry, строгого
+parsing, точности чисел и round-trip JSON/YAML. Каждый следующий слой должен
+добавлять valid, invalid и round-trip fixtures.
 
 Запуск:
 

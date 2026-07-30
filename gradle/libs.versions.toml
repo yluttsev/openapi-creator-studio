@@ -1,5 +1,8 @@
 [versions]
+jackson = "3.2.1"
 lombok = "1.18.46"
 
 [libraries]
+jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }

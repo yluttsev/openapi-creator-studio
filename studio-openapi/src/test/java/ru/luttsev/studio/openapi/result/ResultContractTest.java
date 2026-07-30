@@ -29,11 +29,15 @@ class ResultContractTest {
         AdapterSuccess<String> adapterResult = new AdapterSuccess<>(
                 "mapped",
                 source);
+        SyntaxSuccess<String> syntaxResult = new SyntaxSuccess<>(
+                "parsed",
+                source);
         source.clear();
 
         assertEquals(1, importResult.diagnostics().size());
         assertEquals(1, exportResult.diagnostics().size());
         assertEquals(1, adapterResult.diagnostics().size());
+        assertEquals(1, syntaxResult.diagnostics().size());
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> importResult.diagnostics().clear());
@@ -58,6 +62,11 @@ class ResultContractTest {
                 () -> new AdapterSuccess<>(
                         "mapped",
                         diagnostics));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new SyntaxSuccess<>(
+                        "parsed",
+                        diagnostics));
     }
 
     @Test
@@ -74,10 +83,14 @@ class ResultContractTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new AdapterFailure<>(warnings));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new SyntaxFailure<>(warnings));
 
         assertEquals(errors, new ImportFailure(errors).diagnostics());
         assertEquals(errors, new ExportFailure(errors).diagnostics());
         assertEquals(errors, new AdapterFailure<>(errors).diagnostics());
+        assertEquals(errors, new SyntaxFailure<>(errors).diagnostics());
     }
 
     @Test
