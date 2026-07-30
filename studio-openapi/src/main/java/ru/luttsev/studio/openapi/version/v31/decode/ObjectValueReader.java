@@ -1,6 +1,7 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Objects;
 import ru.luttsev.studio.core.model.schema.UriReference;
 import ru.luttsev.studio.core.model.value.ArrayValue;
@@ -65,6 +66,25 @@ final class ObjectValueReader {
         return null;
     }
 
+    BigInteger optionalNonNegativeInteger(String field) {
+        BigDecimal value = optionalNumber(field);
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            BigInteger integer = value.toBigIntegerExact();
+            if (integer.signum() < 0) {
+                invalidValue(field, "Expected a non-negative integer");
+                return null;
+            }
+            return integer;
+        } catch (ArithmeticException exception) {
+            invalidValue(field, "Expected an integer");
+            return null;
+        }
+    }
+
     ObjectValue requiredObject(String field) {
         DocumentValue value = requiredValue(field);
         return value == null ? null : asObject(field, value);
@@ -117,7 +137,7 @@ final class ObjectValueReader {
         return null;
     }
 
-    private void typeMismatch(
+    void typeMismatch(
             String field,
             String expectedType,
             DocumentValue value) {
@@ -126,7 +146,13 @@ final class ObjectValueReader {
                 "Expected " + expectedType + " but found " + typeOf(value));
     }
 
-    private static String typeOf(DocumentValue value) {
+    void invalidValue(String field, String message) {
+        context.child(field).error(
+                OpenApiDiagnosticCodes.MAPPING_INVALID_VALUE,
+                message);
+    }
+
+    static String typeOf(DocumentValue value) {
         return switch (value) {
             case ArrayValue ignored -> "array";
             case BooleanValue ignored -> "boolean";

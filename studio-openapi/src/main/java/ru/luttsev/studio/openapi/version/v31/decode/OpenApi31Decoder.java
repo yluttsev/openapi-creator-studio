@@ -3,6 +3,7 @@ package ru.luttsev.studio.openapi.version.v31.decode;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import ru.luttsev.studio.core.model.Components;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.info.Info;
@@ -20,11 +21,12 @@ import ru.luttsev.studio.openapi.version.OpenApiVersionFamily;
 public final class OpenApi31Decoder {
 
     private static final Set<String> MAPPED_FIELDS =
-            Set.of("openapi", "info", "jsonSchemaDialect");
+            Set.of("openapi", "info", "jsonSchemaDialect", "components");
     private static final DocumentPath VERSION_PATH =
             DocumentPath.root().child("openapi");
 
     private final InfoDecoder infoDecoder = new InfoDecoder();
+    private final ComponentsDecoder componentsDecoder = new ComponentsDecoder();
 
     public AdapterResult<OpenApiDocument> decode(
             ObjectValue source,
@@ -62,6 +64,14 @@ public final class OpenApi31Decoder {
 
         document.setJsonSchemaDialect(
                 reader.optionalUriReference("jsonSchemaDialect"));
+
+        ObjectValue componentsSource = reader.optionalObject("components");
+        if (componentsSource != null) {
+            Components components = componentsDecoder.decode(
+                    componentsSource,
+                    context.child("components"));
+            document.setComponents(components);
+        }
         AdditionalFieldsMapper.copy(source, document, MAPPED_FIELDS);
 
         if (context.hasErrors()) {
