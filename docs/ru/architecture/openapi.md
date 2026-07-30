@@ -2,8 +2,8 @@
 
 Язык: **Русский** · [English](../../en/architecture/openapi.md)
 
-Статус: публичные контракты, граница version adapter и syntax layer для
-YAML/JSON реализованы на 2026-07-30. Определение версии, структурная
+Статус: публичные контракты, граница version adapter, syntax layer для
+YAML/JSON и определение версии реализованы на 2026-07-30. Структурная
 валидация и маппинг OpenAPI 3.1 запланированы.
 
 Исходный код находится в
@@ -64,6 +64,7 @@ Sealed results:
 - `ImportSuccess` или `ImportFailure`;
 - `ExportSuccess` или `ExportFailure`;
 - `SyntaxSuccess<T>` или `SyntaxFailure<T>` для внутренней границы синтаксиса;
+- `DetectedVersion` или `VersionDetectionFailure` для определения версии;
 - `AdapterSuccess<T>` или `AdapterFailure<T>` для внутренней границы
   адаптера.
 
@@ -111,6 +112,18 @@ Syntax layer отклоняет пустой ввод, корень не-объ�
 промежуточного преобразования через `double`. Serialization создаёт читаемый
 и предсказуемый JSON или YAML, но не сохраняет исходное форматирование.
 
+## Определение версии
+
+`OpenApiVersionDetector` читает обязательное корневое поле `openapi` из
+`ObjectValue`. Реализация по умолчанию принимает строку в формате
+`major.minor.patch` и сохраняет точное значение в `OpenApiVersion`.
+
+Отсутствующее поле, значение не строкового типа или неверный формат дают
+структурированную error diagnostic по пути `/openapi`. Детектор не решает,
+поддерживается ли версия. Это ответственность `OpenApiVersionAdapterRegistry`,
+поэтому корректно записанную будущую версию можно определить, а затем сообщить,
+что адаптера для неё нет.
+
 ## Version adapters
 
 `OpenApiVersionAdapter` — стратегия для одного семейства версий. Она
@@ -129,12 +142,13 @@ Syntax layer отклоняет пустой ввод, корень не-объ�
 ## План реализации
 
 1. Syntax layer для YAML/JSON. Реализован.
-2. Version detector и orchestration импорта/экспорта.
-3. Зафиксированная структурная схема OpenAPI 3.1 и validator.
-4. OpenAPI 3.1 decoder.
-5. OpenAPI 3.1 encoder.
-6. Интеграция строгой семантической валидации.
-7. Round-trip и интеграционные тесты на fixtures.
+2. Version detector. Реализован.
+3. Orchestration импорта/экспорта.
+4. Зафиксированная структурная схема OpenAPI 3.1 и validator.
+5. OpenAPI 3.1 decoder.
+6. OpenAPI 3.1 encoder.
+7. Интеграция строгой семантической валидации.
+8. Round-trip и интеграционные тесты на fixtures.
 
 Официальные схемы будут храниться как версионированные resources. Во время
 работы приложения они не скачиваются.
@@ -142,8 +156,8 @@ Syntax layer отклоняет пустой ввод, корень не-объ�
 ## Тестирование
 
 Тесты фиксируют инварианты options, diagnostics, results, registry, строгого
-parsing, точности чисел и round-trip JSON/YAML. Каждый следующий слой должен
-добавлять valid, invalid и round-trip fixtures.
+parsing, определения версии, точности чисел и round-trip JSON/YAML. Каждый
+следующий слой должен добавлять valid, invalid и round-trip fixtures.
 
 Запуск:
 
