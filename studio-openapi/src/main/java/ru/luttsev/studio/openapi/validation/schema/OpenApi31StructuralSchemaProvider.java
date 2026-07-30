@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 import ru.luttsev.studio.core.model.OpenApiVersion;
+import ru.luttsev.studio.openapi.version.OpenApiVersionFamily;
 
 public final class OpenApi31StructuralSchemaProvider
         implements OpenApiStructuralSchemaProvider {
@@ -14,8 +14,6 @@ public final class OpenApi31StructuralSchemaProvider
     public static final String ROOT_SCHEMA_ID =
             "https://spec.openapis.org/oas/3.1/schema-base/2025-11-23";
 
-    private static final Pattern SUPPORTED_VERSION =
-            Pattern.compile("3\\.1\\.\\d+");
     private static final Map<String, String> RESOURCE_PATHS = Map.of(
             ROOT_SCHEMA_ID,
             "/openapi/3.1/2025-11-23/schema-base.json",
@@ -30,7 +28,7 @@ public final class OpenApi31StructuralSchemaProvider
 
     @Override
     public boolean supports(OpenApiVersion version) {
-        return SUPPORTED_VERSION.matcher(version.value()).matches();
+        return OpenApiVersionFamily.V3_1.supports(version);
     }
 
     @Override

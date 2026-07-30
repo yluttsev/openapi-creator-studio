@@ -20,6 +20,14 @@ public final class OpenApiDiagnosticCodes {
             new DiagnosticCode("openapi.structure.invalid");
     public static final DiagnosticCode UNSUPPORTED_STRUCTURE_VERSION =
             new DiagnosticCode("openapi.structure.unsupported-version");
+    public static final DiagnosticCode MAPPING_MISSING_REQUIRED_FIELD =
+            new DiagnosticCode("openapi.mapping.missing-required-field");
+    public static final DiagnosticCode MAPPING_TYPE_MISMATCH =
+            new DiagnosticCode("openapi.mapping.type-mismatch");
+    public static final DiagnosticCode MAPPING_VERSION_MISMATCH =
+            new DiagnosticCode("openapi.mapping.version-mismatch");
+    public static final DiagnosticCode UNSUPPORTED_MAPPING_VERSION =
+            new DiagnosticCode("openapi.mapping.unsupported-version");
     public static final DiagnosticCode SERIALIZATION_FAILED =
             new DiagnosticCode("openapi.serialization.failed");
 
