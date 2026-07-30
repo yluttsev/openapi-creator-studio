@@ -17,6 +17,8 @@ import ru.luttsev.studio.core.model.info.License;
 import ru.luttsev.studio.core.model.schema.JsonType;
 import ru.luttsev.studio.core.model.schema.LogicalSchema;
 import ru.luttsev.studio.core.model.schema.SchemaDefinition;
+import ru.luttsev.studio.core.model.reference.InlineObject;
+import ru.luttsev.studio.core.model.response.ApiResponse;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.core.model.value.StringValue;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
@@ -123,7 +125,7 @@ class OpenApi31DecoderTest {
     }
 
     @Test
-    void decodesComponentSchemasAndPreservesRemainingComponents() {
+    void decodesComponentSchemasAndResponses() {
         ObjectValue source = parse("""
                 openapi: 3.1.2
                 info:
@@ -158,12 +160,15 @@ class OpenApi31DecoderTest {
                 user.getProperties().get("id"));
         assertEquals(Set.of(JsonType.STRING), id.getTypes());
 
-        ObjectValue componentsSource = assertInstanceOf(
-                ObjectValue.class,
-                source.values().get("components"));
-        assertSame(
-                componentsSource.values().get("responses"),
-                components.getAdditionalFields().get("responses"));
+        InlineObject<?> response = assertInstanceOf(
+                InlineObject.class,
+                components.getResponses().get("GenericError"));
+        assertEquals(
+                "Error",
+                assertInstanceOf(
+                        ApiResponse.class,
+                        response.value()).getDescription());
+        assertNull(components.getAdditionalFields().get("responses"));
         assertNull(document.getAdditionalFields().get("components"));
     }
 
