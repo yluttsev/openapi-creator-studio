@@ -2,9 +2,9 @@
 
 Language: **English** · [Русский](../../ru/architecture/openapi.md)
 
-Status: public contracts, the version adapter boundary, and the YAML/JSON
-syntax layer are implemented as of 2026-07-30. Version detection, structural
-validation, and OpenAPI 3.1 mapping are planned.
+Status: public contracts, the version adapter boundary, the YAML/JSON syntax
+layer, and version detection are implemented as of 2026-07-30. Structural
+validation and OpenAPI 3.1 mapping are planned.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -65,6 +65,7 @@ The sealed results are:
 - `ImportSuccess` or `ImportFailure`;
 - `ExportSuccess` or `ExportFailure`;
 - `SyntaxSuccess<T>` or `SyntaxFailure<T>` for the internal syntax boundary;
+- `DetectedVersion` or `VersionDetectionFailure` for version detection;
 - `AdapterSuccess<T>` or `AdapterFailure<T>` for the internal adapter
   boundary.
 
@@ -113,6 +114,17 @@ properties, trailing content, and multiple YAML documents. Numbers are parsed
 without conversion through `double`. Serialization produces readable,
 deterministic JSON or YAML, but does not preserve source formatting.
 
+## Version detection
+
+`OpenApiVersionDetector` reads the required root `openapi` field from an
+`ObjectValue`. The default implementation accepts a string in
+`major.minor.patch` format and preserves the exact value in `OpenApiVersion`.
+
+A missing field, a non-string value, or an invalid format produces a structured
+error diagnostic at `/openapi`. Detection does not decide whether the version
+is supported. That decision belongs to `OpenApiVersionAdapterRegistry`, so a
+well-formed future version can be detected and then rejected as unsupported.
+
 ## Version adapters
 
 `OpenApiVersionAdapter` is the strategy for one version family. It declares
@@ -132,21 +144,22 @@ the module.
 ## Planned implementation sequence
 
 1. YAML/JSON syntax layer. Implemented.
-2. Version detector and import/export orchestration.
-3. Pinned OpenAPI 3.1 structural schema and validator.
-4. OpenAPI 3.1 decoder.
-5. OpenAPI 3.1 encoder.
-6. Strict semantic validation integration.
-7. Round-trip and fixture-based integration tests.
+2. Version detector. Implemented.
+3. Import/export orchestration.
+4. Pinned OpenAPI 3.1 structural schema and validator.
+5. OpenAPI 3.1 decoder.
+6. OpenAPI 3.1 encoder.
+7. Strict semantic validation integration.
+8. Round-trip and fixture-based integration tests.
 
 Official schemas will be stored as versioned resources. They will not be
 downloaded at application runtime.
 
 ## Testing
 
-Tests enforce option, diagnostic, result, registry, strict syntax, numeric
-precision, and JSON/YAML round-trip invariants. Each later layer must add
-valid, invalid, and round-trip fixtures.
+Tests enforce option, diagnostic, result, registry, strict syntax, version
+detection, numeric precision, and JSON/YAML round-trip invariants. Each later
+layer must add valid, invalid, and round-trip fixtures.
 
 Run:
 

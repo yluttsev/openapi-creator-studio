@@ -25,7 +25,7 @@ logic to YAML, JSON, HTTP, Spring, or a particular storage technology.
 | Module | Responsibility | Current state |
 | --- | --- | --- |
 | `studio-core` | In-memory document model, creation, navigation, references, semantic validation, and editing commands | Implemented and covered by tests |
-| `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | Public contracts, version adapter boundary, and strict YAML/JSON syntax layer implemented; version detection, schema validation, and 3.1 mapping planned |
+| `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | Public contracts, version adapter boundary, strict YAML/JSON syntax layer, and version detection implemented; schema validation, orchestration, and 3.1 mapping planned |
 | `studio-app` | Spring Boot composition root, future REST API, application services, and infrastructure integration | Runnable Spring Boot application created; application architecture is not designed yet |
 
 Dependencies point inward:
@@ -46,8 +46,10 @@ Detailed architecture documentation:
 
 The target and default version for the first release is OpenAPI `3.1.2`. The
 current core validator selects semantic rules for the `3.1.x` family. The
-syntax parser and writer exist, but version-specific mapping does not, so this
-does not mean that end-to-end import and export support is complete.
+syntax parser, writer, and universal version detector exist, but
+version-specific mapping does not, so this does not mean that end-to-end
+import and export support is complete. Version detection only validates and
+reads `major.minor.patch`; adapter selection decides whether it is supported.
 
 The architecture is intended to support `3.0.x` and `3.2.x` later:
 
@@ -148,7 +150,7 @@ and application services have not been defined yet.
 
 ## Deferred decisions
 
-- version detection and import/export orchestration in `studio-openapi`;
+- import/export orchestration in `studio-openapi`;
 - pinned structural schemas and OpenAPI 3.1 mapping;
 - REST API and DTO shape;
 - document sessions, persistence, and concurrent editing;
