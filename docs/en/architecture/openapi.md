@@ -5,8 +5,8 @@ Language: **English** · [Русский](../../ru/architecture/openapi.md)
 Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-07-30. The OpenAPI 3.1 decoder foundation and
-root/info and `components.schemas` mapping are implemented; the remaining
-mapping is in progress.
+root/info, `components.schemas`, and shared payload component mapping are
+implemented; the remaining mapping is in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -175,11 +175,19 @@ field access. Small domain decoders map individual model families, while
 `AdditionalFieldsMapper` preserves every field not consumed by that decoder.
 
 The current vertical slice covers the root version, `jsonSchemaDialect`,
-`Info`, `Contact`, `License`, and `components.schemas`. `SchemaDecoder`
-recursively maps boolean and object schemas, including properties, items,
-constraints, composition, discriminators, references, and unknown JSON Schema
-keywords. Singular `example` and the `examples` array are normalized into the
-core examples list.
+`Info`, `Contact`, `License`, and the schema and payload sections of
+`components`. `SchemaDecoder` recursively maps boolean and object schemas,
+including properties, items, constraints, composition, discriminators,
+references, and unknown JSON Schema keywords. Singular `example` and the
+`examples` array are normalized into the core examples list.
+
+The payload layer maps Example, Parameter, Header, Request Body, Response,
+Media Type, and Encoding Objects. A shared `ReferenceOrDecoder` distinguishes
+inline values from Reference Objects, while `PayloadDecoder` coordinates the
+recursive Media Type, Encoding, and Header graph without cyclic constructor
+dependencies. In OpenAPI 3.1, media types are decoded inside `content`;
+`components.mediaTypes` is intentionally not accepted because it belongs to a
+later OpenAPI version.
 
 Component sections that are not mapped yet are temporarily preserved in
 `Components.additionalFields`. Standard root fields that are not mapped yet
@@ -191,8 +199,8 @@ fields as the decoder expands.
 1. YAML/JSON syntax layer. Implemented.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
-4. OpenAPI 3.1 decoder. In progress: foundation, root/info, and
-   `components.schemas` implemented.
+4. OpenAPI 3.1 decoder. In progress: foundation, root/info, schemas, and
+   shared payload components implemented.
 5. OpenAPI 3.1 encoder.
 6. Import/export orchestration.
 7. Strict semantic validation integration.

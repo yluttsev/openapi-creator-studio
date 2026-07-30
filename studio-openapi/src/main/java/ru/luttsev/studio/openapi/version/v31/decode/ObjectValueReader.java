@@ -42,6 +42,11 @@ final class ObjectValueReader {
         return value == null ? null : new UriReference(value);
     }
 
+    UriReference requiredUriReference(String field) {
+        String value = requiredString(field);
+        return value == null ? null : new UriReference(value);
+    }
+
     Boolean optionalBoolean(String field) {
         DocumentValue value = source.values().get(field);
         if (value == null) {
