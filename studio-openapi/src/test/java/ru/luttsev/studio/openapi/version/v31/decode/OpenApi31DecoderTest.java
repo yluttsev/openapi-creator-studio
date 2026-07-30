@@ -6,12 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Set;
 import org.junit.jupiter.api.Test;
+import ru.luttsev.studio.core.model.Components;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.info.Contact;
 import ru.luttsev.studio.core.model.info.Info;
 import ru.luttsev.studio.core.model.info.License;
+import ru.luttsev.studio.core.model.schema.JsonType;
+import ru.luttsev.studio.core.model.schema.LogicalSchema;
+import ru.luttsev.studio.core.model.schema.SchemaDefinition;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.core.model.value.StringValue;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
@@ -115,6 +120,75 @@ class OpenApi31DecoderTest {
                 OpenApiDiagnosticCodes.MAPPING_MISSING_REQUIRED_FIELD,
                 diagnostic.code());
         assertEquals("/info/title", diagnostic.path().toPointer());
+    }
+
+    @Test
+    void decodesComponentSchemasAndPreservesRemainingComponents() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                info:
+                  title: Example API
+                  version: 1.0.0
+                paths: {}
+                components:
+                  schemas:
+                    Enabled: true
+                    User:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                  responses:
+                    GenericError:
+                      description: Error
+                """);
+
+        OpenApiDocument document = successValue(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+
+        Components components = document.getComponents();
+        assertTrue(assertInstanceOf(
+                LogicalSchema.class,
+                components.getSchemas().get("Enabled")).isValue());
+        SchemaDefinition user = assertInstanceOf(
+                SchemaDefinition.class,
+                components.getSchemas().get("User"));
+        SchemaDefinition id = assertInstanceOf(
+                SchemaDefinition.class,
+                user.getProperties().get("id"));
+        assertEquals(Set.of(JsonType.STRING), id.getTypes());
+
+        ObjectValue componentsSource = assertInstanceOf(
+                ObjectValue.class,
+                source.values().get("components"));
+        assertSame(
+                componentsSource.values().get("responses"),
+                components.getAdditionalFields().get("responses"));
+        assertNull(document.getAdditionalFields().get("components"));
+    }
+
+    @Test
+    void reportsInvalidComponentSchemaAtExactPath() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                info:
+                  title: Example API
+                  version: 1.0.0
+                paths: {}
+                components:
+                  schemas:
+                    Broken: invalid
+                """);
+
+        OpenApiDiagnostic diagnostic = singleFailureDiagnostic(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+
+        assertEquals(
+                OpenApiDiagnosticCodes.MAPPING_TYPE_MISMATCH,
+                diagnostic.code());
+        assertEquals(
+                "/components/schemas/Broken",
+                diagnostic.path().toPointer());
     }
 
     @Test
