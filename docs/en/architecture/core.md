@@ -69,6 +69,11 @@ such as `self`.
 parameters, examples, request bodies, headers, security schemes, links,
 callbacks, and path items.
 
+An operation's `responses` field is represented by the `Responses` model.
+The model stores response entries by `ResponseKey` and extends
+`ExtensibleObject`, so fields such as `x-*` extensions remain attached to the
+Responses Object instead of being moved to the operation.
+
 Most models extend `ExtensibleObject`. Its `additionalFields` map stores
 unknown fields and `x-*` extensions as `DocumentValue`.
 
