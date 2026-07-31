@@ -6,8 +6,9 @@ Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-07-31. The OpenAPI 3.1 decoder is implemented,
 including root fields, paths, operations, callbacks, webhooks, schemas,
-payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation is
-implemented; domain encoders are still in progress.
+payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation and
+recursive Schema Object encoder are implemented; the remaining domain
+encoders are still in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -218,8 +219,16 @@ Unknown fields and extensions are copied from `additionalFields` without
 changing their `DocumentValue` representation. A key that is both a mapped
 OpenAPI 3.1 field and an additional field is a compatibility error: the typed
 core property remains authoritative, and the conflicting additional value is
-not silently substituted. Domain-specific schema, payload, path, operation,
-and root encoders will be added in subsequent slices.
+not silently substituted.
+
+`SchemaEncoder` maps logical boolean schemas and Schema Definitions
+recursively, including types, formats, references, examples, constraints,
+properties, arrays, composition, discriminators, and unknown JSON Schema
+keywords. One type is emitted as a string and multiple types as an array.
+Normalized examples are emitted through the JSON Schema `examples` array.
+The OpenAPI 3.2-only discriminator field `defaultMapping` produces an
+unsupported-field compatibility error when targeting OpenAPI 3.1. Payload,
+path, operation, and root encoders will be added in subsequent slices.
 
 ## Planned implementation sequence
 
@@ -227,7 +236,8 @@ and root encoders will be added in subsequent slices.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
-5. OpenAPI 3.1 encoder. Foundation implemented; domain encoders in progress.
+5. OpenAPI 3.1 encoder. Foundation and schema slice implemented; remaining
+   domain encoders in progress.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.
