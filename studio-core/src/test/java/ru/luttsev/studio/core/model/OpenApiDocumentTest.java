@@ -45,7 +45,7 @@ class OpenApiDocumentTest {
 
         Operation getUser = new Operation();
         getUser.setOperationId("getUser");
-        getUser.getResponses().put(
+        getUser.getResponses().getValues().put(
                 new ResponseKey("200"),
                 new InlineObject<>(okResponse));
 
@@ -80,6 +80,7 @@ class OpenApiDocumentTest {
         assertEquals(
                 "User found",
                 ((InlineObject<ApiResponse>) getUser.getResponses()
+                                .getValues()
                                 .get(new ResponseKey("200")))
                         .value()
                         .getDescription());

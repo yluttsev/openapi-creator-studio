@@ -66,6 +66,11 @@ components, security requirements, tags и external documentation. Также м
 parameters, examples, request bodies, headers, security schemes, links,
 callbacks и path items.
 
+Поле `responses` операции представлено моделью `Responses`. Она хранит записи
+ответов по `ResponseKey` и наследует `ExtensibleObject`, поэтому поля вроде
+`x-*` extensions остаются на уровне Responses Object и не переносятся в
+операцию.
+
 Большинство моделей наследует `ExtensibleObject`. Его `additionalFields`
 хранит неизвестные поля и `x-*` extensions в виде `DocumentValue`.
 

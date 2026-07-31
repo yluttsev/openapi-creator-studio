@@ -5,6 +5,7 @@ import ru.luttsev.studio.core.model.link.Link;
 import ru.luttsev.studio.core.model.path.Operation;
 import ru.luttsev.studio.core.model.path.PathItem;
 import ru.luttsev.studio.core.model.path.Paths;
+import ru.luttsev.studio.core.model.response.Responses;
 
 final class PathMappings {
 
@@ -15,6 +16,7 @@ final class PathMappings {
         registry.register(Paths.class, PathMappings::collectPaths);
         registry.register(PathItem.class, PathMappings::collectPathItem);
         registry.register(Operation.class, PathMappings::collectOperation);
+        registry.register(Responses.class, PathMappings::collectResponses);
         registry.register(Callback.class, PathMappings::collectCallback);
         registry.register(Link.class, PathMappings::collectLink);
     }
@@ -49,6 +51,12 @@ final class PathMappings {
         children.add("deprecated", operation.getDeprecated());
         children.add("security", operation.getSecurity());
         children.add("servers", operation.getServers());
+    }
+
+    private static void collectResponses(
+            Responses responses,
+            ChildrenCollector children) {
+        children.addEntries(responses.getValues());
     }
 
     private static void collectCallback(

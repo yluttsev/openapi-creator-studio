@@ -236,7 +236,7 @@ public final class LinkIntegrityRule implements ValidationRule {
         ReferenceValueResolver resolver = new ReferenceValueResolver(context);
         for (OperationOccurrence source : operations.all()) {
             for (Map.Entry<ResponseKey, ReferenceOr<ApiResponse>> responseEntry :
-                    source.operation().getResponses().entrySet()) {
+                    source.operation().getResponses().getValues().entrySet()) {
                 DocumentPath responseUsagePath = source.path()
                         .child("responses")
                         .child(responseEntry.getKey().value());
