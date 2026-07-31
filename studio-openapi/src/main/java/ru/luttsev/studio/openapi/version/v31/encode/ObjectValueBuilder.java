@@ -1,9 +1,13 @@
 package ru.luttsev.studio.openapi.version.v31.encode;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.BooleanValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.NumberValue;
@@ -40,6 +44,22 @@ final class ObjectValueBuilder {
         return value == null
                 ? this
                 : put(field, new NumberValue(value));
+    }
+
+    ObjectValueBuilder putInteger(String field, BigInteger value) {
+        return value == null
+                ? this
+                : put(field, new NumberValue(new BigDecimal(value)));
+    }
+
+    ObjectValueBuilder putArray(
+            String field,
+            List<? extends DocumentValue> values) {
+        if (values == null || values.isEmpty()) {
+            return this;
+        }
+        ArrayList<DocumentValue> copiedValues = new ArrayList<>(values);
+        return put(field, new ArrayValue(copiedValues));
     }
 
     ObjectValue build() {
