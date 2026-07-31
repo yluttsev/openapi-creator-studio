@@ -6,6 +6,7 @@ import java.util.Set;
 import ru.luttsev.studio.core.model.Components;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
+import ru.luttsev.studio.core.model.info.ExternalDocumentation;
 import ru.luttsev.studio.core.model.info.Info;
 import ru.luttsev.studio.core.model.path.Paths;
 import ru.luttsev.studio.core.model.value.ObjectValue;
@@ -26,9 +27,13 @@ public final class OpenApi31Decoder {
                     "openapi",
                     "info",
                     "jsonSchemaDialect",
+                    "servers",
                     "paths",
                     "webhooks",
-                    "components");
+                    "components",
+                    "security",
+                    "tags",
+                    "externalDocs");
     private static final DocumentPath VERSION_PATH =
             DocumentPath.root().child("openapi");
 
@@ -37,6 +42,12 @@ public final class OpenApi31Decoder {
     private final PathItemDecoder pathItemDecoder = new PathItemDecoder(
             new PayloadDecoder(new SchemaDecoder()));
     private final ComponentsDecoder componentsDecoder = new ComponentsDecoder();
+    private final ServerDecoder serverDecoder = new ServerDecoder();
+    private final SecurityRequirementDecoder securityRequirementDecoder =
+            new SecurityRequirementDecoder();
+    private final TagDecoder tagDecoder = new TagDecoder();
+    private final ExternalDocumentationDecoder externalDocumentationDecoder =
+            new ExternalDocumentationDecoder();
 
     public AdapterResult<OpenApiDocument> decode(
             ObjectValue source,
@@ -74,6 +85,9 @@ public final class OpenApi31Decoder {
 
         document.setJsonSchemaDialect(
                 reader.optionalUriReference("jsonSchemaDialect"));
+        document.setServers(serverDecoder.decodeList(
+                reader.optionalArray("servers"),
+                context.child("servers")));
 
         ObjectValue pathsSource = reader.optionalObject("paths");
         if (pathsSource != null) {
@@ -93,6 +107,22 @@ public final class OpenApi31Decoder {
                     componentsSource,
                     context.child("components"));
             document.setComponents(components);
+        }
+
+        document.setSecurity(securityRequirementDecoder.decodeList(
+                reader.optionalArray("security"),
+                context.child("security")));
+        document.setTags(tagDecoder.decodeList(
+                reader.optionalArray("tags"),
+                context.child("tags")));
+
+        ObjectValue externalDocsSource = reader.optionalObject("externalDocs");
+        if (externalDocsSource != null) {
+            ExternalDocumentation externalDocs =
+                    externalDocumentationDecoder.decode(
+                            externalDocsSource,
+                            context.child("externalDocs"));
+            document.setExternalDocs(externalDocs);
         }
         AdditionalFieldsMapper.copy(source, document, MAPPED_FIELDS);
 

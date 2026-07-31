@@ -4,9 +4,9 @@
 
 Статус: публичные контракты, граница version adapter, syntax layer для
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
-реализованы на 2026-07-31. Foundation decoder OpenAPI 3.1 и маппинг
-root/info, paths, operations, callbacks, webhooks, схем, payload-компонентов,
-security schemes и links реализованы; остальной маппинг находится в работе.
+реализованы на 2026-07-31. Decoder OpenAPI 3.1 реализован, включая корневые
+поля, paths, operations, callbacks, webhooks, schemas, payload, security
+schemes и links.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -202,17 +202,18 @@ Callbacks операций, корневые webhooks и секции callbacks 
 components преобразуются в типизированные core-модели. Callback expressions
 рекурсивно переиспользуют `PathItemDecoder`, а callback-ссылки — общий
 `ReferenceOrDecoder`. Расширения Callback Object сохраняются в
-`Callback.additionalFields`. Остальные необработанные корневые поля остаются в
-`OpenApiDocument.additionalFields` и перейдут в типизированные поля core по мере
-расширения decoder.
+`Callback.additionalFields`. Все стандартные корневые поля OpenAPI 3.1
+преобразуются в типизированные core-модели. Неизвестные корневые поля и
+extensions остаются в `OpenApiDocument.additionalFields`. Поля Tag из OpenAPI
+3.2 — `summary`, `parent` и `kind` — адаптер 3.1 не заполняет; при прямом вызове
+decoder они сохраняются как дополнительные поля.
 
 ## План реализации
 
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
-4. OpenAPI 3.1 decoder. В работе: foundation, root/info, paths, operations,
-   callbacks, webhooks, schemas, payload, security schemes и links реализованы.
+4. OpenAPI 3.1 decoder. Реализован.
 5. OpenAPI 3.1 encoder.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
