@@ -186,9 +186,8 @@ class PathsOperationsDecoderTest {
         assertTrue(security.getFirst().getRequirements().get("ApiKey").isEmpty());
         assertTrue(security.get(1).getRequirements().isEmpty());
         assertEquals("https://api.example.com", operation.getServers().getFirst().getUrl());
-        assertInstanceOf(
-                ObjectValue.class,
-                operation.getAdditionalFields().get("callbacks"));
+        assertTrue(operation.getCallbacks().isEmpty());
+        assertNull(operation.getAdditionalFields().get("callbacks"));
         assertEquals(
                 new StringValue("users-team"),
                 operation.getAdditionalFields().get("x-operation-owner"));
