@@ -30,6 +30,8 @@ public final class OpenApiDiagnosticCodes {
             new DiagnosticCode("openapi.mapping.version-mismatch");
     public static final DiagnosticCode UNSUPPORTED_MAPPING_VERSION =
             new DiagnosticCode("openapi.mapping.unsupported-version");
+    public static final DiagnosticCode VERSION_FIELD_CONFLICT =
+            new DiagnosticCode("openapi.compatibility.field-conflict");
     public static final DiagnosticCode SERIALIZATION_FAILED =
             new DiagnosticCode("openapi.serialization.failed");
 
