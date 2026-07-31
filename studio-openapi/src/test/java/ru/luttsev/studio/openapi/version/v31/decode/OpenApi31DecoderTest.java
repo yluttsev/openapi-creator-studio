@@ -3,7 +3,6 @@ package ru.luttsev.studio.openapi.version.v31.decode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
@@ -99,8 +98,8 @@ class OpenApi31DecoderTest {
                 new StringValue("public"),
                 license.getAdditionalFields().get("x-license-scope"));
 
-        assertSame(source.values().get("paths"),
-                document.getAdditionalFields().get("paths"));
+        assertTrue(document.getPaths().getItems().isEmpty());
+        assertNull(document.getAdditionalFields().get("paths"));
         assertEquals(
                 new StringValue("root-value"),
                 document.getAdditionalFields().get("x-root-id"));
