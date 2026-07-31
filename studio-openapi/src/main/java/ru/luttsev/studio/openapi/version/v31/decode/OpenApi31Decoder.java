@@ -22,12 +22,20 @@ import ru.luttsev.studio.openapi.version.OpenApiVersionFamily;
 public final class OpenApi31Decoder {
 
     private static final Set<String> MAPPED_FIELDS =
-            Set.of("openapi", "info", "jsonSchemaDialect", "paths", "components");
+            Set.of(
+                    "openapi",
+                    "info",
+                    "jsonSchemaDialect",
+                    "paths",
+                    "webhooks",
+                    "components");
     private static final DocumentPath VERSION_PATH =
             DocumentPath.root().child("openapi");
 
     private final InfoDecoder infoDecoder = new InfoDecoder();
     private final PathsDecoder pathsDecoder = new PathsDecoder();
+    private final PathItemDecoder pathItemDecoder = new PathItemDecoder(
+            new PayloadDecoder(new SchemaDecoder()));
     private final ComponentsDecoder componentsDecoder = new ComponentsDecoder();
 
     public AdapterResult<OpenApiDocument> decode(
@@ -74,6 +82,10 @@ public final class OpenApi31Decoder {
                     context.child("paths"));
             document.setPaths(paths);
         }
+
+        document.setWebhooks(pathItemDecoder.decodeMap(
+                reader.optionalObject("webhooks"),
+                context.child("webhooks")));
 
         ObjectValue componentsSource = reader.optionalObject("components");
         if (componentsSource != null) {

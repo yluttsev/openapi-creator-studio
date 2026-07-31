@@ -1,6 +1,5 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import ru.luttsev.studio.core.model.reference.InlineObject;
@@ -37,20 +36,10 @@ final class ReferenceOrDecoder {
             ObjectValue source,
             DecodeContext context,
             BiFunction<ObjectValue, DecodeContext, T> inlineDecoder) {
-        LinkedHashMap<String, ReferenceOr<T>> values = new LinkedHashMap<>();
-        if (source == null) {
-            return values;
-        }
-
-        for (Map.Entry<String, DocumentValue> entry : source.values().entrySet()) {
-            ReferenceOr<T> value = decode(
-                    entry.getValue(),
-                    context.child(entry.getKey()),
-                    inlineDecoder);
-            if (value != null) {
-                values.put(entry.getKey(), value);
-            }
-        }
-        return values;
+        return ObjectValueMapper.mapValues(
+                source,
+                context,
+                (value, itemContext) ->
+                        decode(value, itemContext, inlineDecoder));
     }
 }

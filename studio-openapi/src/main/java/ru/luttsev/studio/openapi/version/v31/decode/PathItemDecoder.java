@@ -1,5 +1,6 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import ru.luttsev.studio.core.model.path.HttpMethod;
@@ -59,6 +60,12 @@ final class PathItemDecoder {
         return pathItem;
     }
 
+    Map<String, PathItem> decodeMap(
+            ObjectValue source,
+            DecodeContext context) {
+        return ObjectValueMapper.mapObjects(source, context, this::decode);
+    }
+
     private void decodeOperation(
             ObjectValueReader reader,
             String field,
@@ -71,7 +78,8 @@ final class PathItemDecoder {
         }
         Operation operation = operationDecoder.decode(
                 operationSource,
-                context.child(field));
+                context.child(field),
+                this);
         target.getOperations().put(method, operation);
     }
 }

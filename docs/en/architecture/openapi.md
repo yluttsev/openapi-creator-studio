@@ -5,8 +5,9 @@ Language: **English** · [Русский](../../ru/architecture/openapi.md)
 Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-07-31. The OpenAPI 3.1 decoder foundation and
-root/info, paths, operations, schema, payload, security scheme, and link
-mapping are implemented; the remaining mapping is in progress.
+root/info, paths, operations, callbacks, webhooks, schema, payload, security
+scheme, and link mapping are implemented; the remaining mapping is in
+progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -197,11 +198,11 @@ types are decoded inside `content`; `components.mediaTypes` is intentionally
 not accepted because it belongs to a later OpenAPI version.
 
 Operation callbacks, root webhooks, and Callback and Path Item component
-sections are not mapped yet. Operation callbacks are temporarily preserved in
-`Operation.additionalFields`; component sections remain in
-`Components.additionalFields`. Standard root fields that are not mapped yet
-remain in `OpenApiDocument.additionalFields`; they will move to typed core
-fields as the decoder expands.
+sections are mapped. Callback expressions recursively reuse `PathItemDecoder`,
+while callback references use the common `ReferenceOrDecoder`. Callback
+extensions remain in `Callback.additionalFields`. Standard root fields that
+are not mapped yet remain in `OpenApiDocument.additionalFields`; they will move
+to typed core fields as the decoder expands.
 
 ## Planned implementation sequence
 
@@ -209,7 +210,8 @@ fields as the decoder expands.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. In progress: foundation, root/info, paths, operations,
-   schemas, payload, security schemes, and links implemented.
+   callbacks, webhooks, schemas, payload, security schemes, and links
+   implemented.
 5. OpenAPI 3.1 encoder.
 6. Import/export orchestration.
 7. Strict semantic validation integration.

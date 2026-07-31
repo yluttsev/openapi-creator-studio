@@ -1,15 +1,12 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import ru.luttsev.studio.core.model.server.Server;
 import ru.luttsev.studio.core.model.server.ServerVariable;
 import ru.luttsev.studio.core.model.value.ArrayValue;
-import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
-import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 
 final class ServerDecoder {
 
@@ -40,24 +37,9 @@ final class ServerDecoder {
     private Map<String, ServerVariable> decodeVariables(
             ObjectValue source,
             DecodeContext context) {
-        LinkedHashMap<String, ServerVariable> variables = new LinkedHashMap<>();
-        if (source == null) {
-            return variables;
-        }
-
-        for (Map.Entry<String, DocumentValue> entry : source.values().entrySet()) {
-            DecodeContext variableContext = context.child(entry.getKey());
-            if (entry.getValue() instanceof ObjectValue objectValue) {
-                variables.put(
-                        entry.getKey(),
-                        serverVariableDecoder.decode(objectValue, variableContext));
-            } else {
-                variableContext.error(
-                        OpenApiDiagnosticCodes.MAPPING_TYPE_MISMATCH,
-                        "Expected object but found "
-                                + ObjectValueReader.typeOf(entry.getValue()));
-            }
-        }
-        return variables;
+        return ObjectValueMapper.mapObjects(
+                source,
+                context,
+                serverVariableDecoder::decode);
     }
 }
