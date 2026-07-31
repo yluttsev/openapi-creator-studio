@@ -6,7 +6,8 @@
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-07-31. Decoder OpenAPI 3.1 реализован, включая корневые
 поля, paths, operations, callbacks, webhooks, schemas, payload, security
-schemes и links.
+schemes и links. Фундамент encoder-а OpenAPI 3.1 реализован; предметные
+encoder-ы ещё в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -208,13 +209,29 @@ extensions остаются в `OpenApiDocument.additionalFields`. Поля Tag 
 3.2 — `summary`, `parent` и `kind` — адаптер 3.1 не заполняет; при прямом вызове
 decoder они сохраняются как дополнительные поля.
 
+## Encoder OpenAPI 3.1
+
+Encoder преобразует нормализованную core-модель обратно в общее
+синтаксическое дерево `ObjectValue`. `EncodeContext` хранит целевую версию и
+текущий `DocumentPath`, а также разделяет diagnostics совместимости между
+дочерними контекстами. `ObjectValueBuilder` обеспечивает детерминированную
+сборку объектов и пропускает отсутствующие необязательные значения.
+
+Неизвестные поля и extensions переносятся из `additionalFields` без изменения
+их представления `DocumentValue`. Если ключ одновременно является стандартным
+полем OpenAPI 3.1 и дополнительным полем, это ошибка совместимости:
+типизированное свойство core остаётся источником истины, а конфликтующее
+дополнительное значение не подставляется молча. Предметные encoder-ы schemas,
+payload, paths, operations и корневого документа будут добавлены следующими
+срезами.
+
 ## План реализации
 
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
-5. OpenAPI 3.1 encoder.
+5. OpenAPI 3.1 encoder. Фундамент реализован; предметные encoder-ы в работе.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.

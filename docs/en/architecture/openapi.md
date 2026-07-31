@@ -6,7 +6,8 @@ Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-07-31. The OpenAPI 3.1 decoder is implemented,
 including root fields, paths, operations, callbacks, webhooks, schemas,
-payloads, security schemes, and links.
+payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation is
+implemented; domain encoders are still in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -205,13 +206,28 @@ root fields are mapped. Unknown root fields and extensions remain in
 `parent`, and `kind` are not populated by the 3.1 adapter; if supplied directly
 to the decoder, they are preserved as additional fields.
 
+## OpenAPI 3.1 encoder
+
+The encoder converts the normalized core model back into the shared
+`ObjectValue` syntax tree. `EncodeContext` carries the target version and
+current `DocumentPath`, and shares compatibility diagnostics across child
+contexts. `ObjectValueBuilder` provides deterministic object construction and
+omits absent optional values.
+
+Unknown fields and extensions are copied from `additionalFields` without
+changing their `DocumentValue` representation. A key that is both a mapped
+OpenAPI 3.1 field and an additional field is a compatibility error: the typed
+core property remains authoritative, and the conflicting additional value is
+not silently substituted. Domain-specific schema, payload, path, operation,
+and root encoders will be added in subsequent slices.
+
 ## Planned implementation sequence
 
 1. YAML/JSON syntax layer. Implemented.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
-5. OpenAPI 3.1 encoder.
+5. OpenAPI 3.1 encoder. Foundation implemented; domain encoders in progress.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.
