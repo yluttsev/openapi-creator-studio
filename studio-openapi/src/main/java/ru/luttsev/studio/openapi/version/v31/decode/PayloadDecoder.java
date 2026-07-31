@@ -172,25 +172,11 @@ final class PayloadDecoder {
     Map<String, Encoding> decodeEncodings(
             ObjectValue source,
             DecodeContext context) {
-        LinkedHashMap<String, Encoding> encodings = new LinkedHashMap<>();
-        if (source == null) {
-            return encodings;
-        }
-
-        for (Map.Entry<String, DocumentValue> entry : source.values().entrySet()) {
-            ObjectValue encodingSource = asObject(
-                    entry.getValue(),
-                    context.child(entry.getKey()));
-            if (encodingSource != null) {
-                encodings.put(
-                        entry.getKey(),
-                        encodingDecoder.decode(
-                                encodingSource,
-                                context.child(entry.getKey()),
-                                this));
-            }
-        }
-        return encodings;
+        return ObjectValueMapper.mapObjects(
+                source,
+                context,
+                (object, itemContext) ->
+                        encodingDecoder.decode(object, itemContext, this));
     }
 
     private ReferenceOr<MediaType> decodeInlineMediaType(

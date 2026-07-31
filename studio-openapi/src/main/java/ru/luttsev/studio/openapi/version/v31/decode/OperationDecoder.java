@@ -1,18 +1,13 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import ru.luttsev.studio.core.model.info.ExternalDocumentation;
+import ru.luttsev.studio.core.model.media.RequestBody;
 import ru.luttsev.studio.core.model.path.Operation;
 import ru.luttsev.studio.core.model.reference.ReferenceOr;
-import ru.luttsev.studio.core.model.media.RequestBody;
-import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
-import ru.luttsev.studio.core.model.value.StringValue;
-import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 
 final class OperationDecoder {
 
@@ -25,12 +20,14 @@ final class OperationDecoder {
             "parameters",
             "requestBody",
             "responses",
+            "callbacks",
             "deprecated",
             "security",
             "servers");
 
     private final PayloadDecoder payloadDecoder;
     private final ResponsesDecoder responsesDecoder;
+    private final CallbackDecoder callbackDecoder = new CallbackDecoder();
     private final ServerDecoder serverDecoder = new ServerDecoder();
     private final SecurityRequirementDecoder securityRequirementDecoder =
             new SecurityRequirementDecoder();
@@ -44,10 +41,13 @@ final class OperationDecoder {
         responsesDecoder = new ResponsesDecoder(payloadDecoder);
     }
 
-    Operation decode(ObjectValue source, DecodeContext context) {
+    Operation decode(
+            ObjectValue source,
+            DecodeContext context,
+            PathItemDecoder pathItemDecoder) {
         ObjectValueReader reader = new ObjectValueReader(source, context);
         Operation operation = new Operation();
-        operation.setTags(decodeStringList(
+        operation.setTags(ArrayValueMapper.mapStrings(
                 reader.optionalArray("tags"),
                 context.child("tags")));
         operation.setSummary(reader.optionalString("summary"));
@@ -81,6 +81,11 @@ final class OperationDecoder {
                     context.child("responses")));
         }
 
+        operation.setCallbacks(callbackDecoder.decodeMap(
+                reader.optionalObject("callbacks"),
+                context.child("callbacks"),
+                pathItemDecoder::decode));
+
         operation.setDeprecated(reader.optionalBoolean("deprecated"));
         operation.setSecurity(securityRequirementDecoder.decodeList(
                 reader.optionalArray("security"),
@@ -90,27 +95,5 @@ final class OperationDecoder {
                 context.child("servers")));
         AdditionalFieldsMapper.copy(source, operation, MAPPED_FIELDS);
         return operation;
-    }
-
-    private static List<String> decodeStringList(
-            ArrayValue source,
-            DecodeContext context) {
-        ArrayList<String> values = new ArrayList<>();
-        if (source == null) {
-            return values;
-        }
-
-        for (int index = 0; index < source.values().size(); index++) {
-            DocumentValue value = source.values().get(index);
-            if (value instanceof StringValue stringValue) {
-                values.add(stringValue.value());
-            } else {
-                context.child(Integer.toString(index)).error(
-                        OpenApiDiagnosticCodes.MAPPING_TYPE_MISMATCH,
-                        "Expected string but found "
-                                + ObjectValueReader.typeOf(value));
-            }
-        }
-        return values;
     }
 }

@@ -17,7 +17,9 @@ final class ComponentsDecoder {
             "requestBodies",
             "headers",
             "securitySchemes",
-            "links");
+            "links",
+            "callbacks",
+            "pathItems");
 
     private final SchemaDecoder schemaDecoder = new SchemaDecoder();
     private final PayloadDecoder payloadDecoder =
@@ -26,6 +28,9 @@ final class ComponentsDecoder {
             new ReferenceOrDecoder();
     private final SecuritySchemeDecoder securitySchemeDecoder =
             new SecuritySchemeDecoder();
+    private final PathItemDecoder pathItemDecoder =
+            new PathItemDecoder(payloadDecoder);
+    private final CallbackDecoder callbackDecoder = new CallbackDecoder();
 
     Components decode(ObjectValue source, DecodeContext context) {
         ObjectValueReader reader = new ObjectValueReader(source, context);
@@ -59,6 +64,13 @@ final class ComponentsDecoder {
         components.setLinks(payloadDecoder.decodeLinks(
                 reader.optionalObject("links"),
                 context.child("links")));
+        components.setCallbacks(callbackDecoder.decodeMap(
+                reader.optionalObject("callbacks"),
+                context.child("callbacks"),
+                pathItemDecoder::decode));
+        components.setPathItems(pathItemDecoder.decodeMap(
+                reader.optionalObject("pathItems"),
+                context.child("pathItems")));
         AdditionalFieldsMapper.copy(source, components, MAPPED_FIELDS);
         return components;
     }
