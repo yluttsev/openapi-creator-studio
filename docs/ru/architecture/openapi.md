@@ -5,8 +5,8 @@
 Статус: публичные контракты, граница version adapter, syntax layer для
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-07-31. Foundation decoder OpenAPI 3.1 и маппинг
-root/info, схем, payload-компонентов, security schemes и links реализованы;
-остальной маппинг находится в работе.
+root/info, paths, operations, схем, payload-компонентов, security schemes и
+links реализованы; остальной маппинг находится в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -176,37 +176,42 @@ diagnostics для всех дочерних контекстов. `ObjectValueR
 которое ещё не было обработано decoder.
 
 Текущий вертикальный срез охватывает корневую версию, `jsonSchemaDialect`,
-`Info`, `Contact`, `License`, а также schema-, payload-, security scheme- и
-link-секции `components`. `SchemaDecoder` рекурсивно преобразует логические и
-объектные схемы, включая properties, items, ограничения, композицию,
-discriminator, ссылки и неизвестные ключевые слова JSON Schema. Одиночный
-`example` и массив `examples` нормализуются в список examples модели core.
+`Info`, `Contact`, `License`, корневой `paths`, Path Item Objects, стандартные
+HTTP operations, а также schema-, payload-, security scheme- и link-секции
+`components`. `SchemaDecoder` рекурсивно преобразует логические и объектные
+схемы, включая properties, items, ограничения, композицию, discriminator,
+ссылки и неизвестные ключевые слова JSON Schema. Одиночный `example` и массив
+`examples` нормализуются в список examples модели core.
 
 Payload-слой преобразует Example, Parameter, Header, Request Body, Response,
 Media Type и Encoding Objects. Общий `ReferenceOrDecoder` различает inline-
 значения и Reference Objects, а `PayloadDecoder` координирует рекурсивный граф
 Media Type, Encoding и Header без циклических зависимостей конструкторов.
 `LinkDecoder` преобразует как links внутри responses, так и общие links из
-components; вложенные Server и Server Variable Objects обрабатываются
-переиспользуемыми декодерами, которые позже будут применены на корневом и
+components. Переиспользуемые декодеры преобразуют Server, Server Variable,
+External Documentation и Security Requirement Objects на path- и
 operation-уровнях. `SecuritySchemeDecoder` поддерживает API key, HTTP, mutual
-TLS, OAuth 2.0 и OpenID Connect вместе со всеми OAuth flows из OpenAPI 3.1. В
-OpenAPI 3.1 media types декодируются внутри `content`;
+TLS, OAuth 2.0 и OpenID Connect вместе со всеми OAuth flows из OpenAPI 3.1.
+Ответы операции преобразуются в расширяемую core-модель `Responses`, поэтому
+extensions объекта responses сохраняются рядом с типизированными status-code
+записями. В OpenAPI 3.1 media types декодируются внутри `content`;
 `components.mediaTypes` намеренно не принимается, потому что это поле более
 новой версии OpenAPI.
 
-Секции callbacks и pathItems в components пока не преобразуются и временно
-сохраняются в `Components.additionalFields`. Остальные необработанные корневые
-поля остаются в `OpenApiDocument.additionalFields` и перейдут в типизированные
-поля core по мере расширения decoder.
+Callbacks операций, корневые webhooks и секции callbacks и pathItems в
+components пока не преобразуются. Callbacks операций временно сохраняются в
+`Operation.additionalFields`, а component-секции — в
+`Components.additionalFields`. Остальные необработанные корневые поля остаются
+в `OpenApiDocument.additionalFields` и перейдут в типизированные поля core по
+мере расширения decoder.
 
 ## План реализации
 
 1. Syntax layer для YAML/JSON. Реализован.
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
-4. OpenAPI 3.1 decoder. В работе: foundation, root/info, schemas, payload,
-   security schemes и links реализованы.
+4. OpenAPI 3.1 decoder. В работе: foundation, root/info, paths, operations,
+   schemas, payload, security schemes и links реализованы.
 5. OpenAPI 3.1 encoder.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
