@@ -13,8 +13,7 @@ import ru.luttsev.studio.core.model.info.ExternalDocumentation;
 import ru.luttsev.studio.core.model.media.RequestBody;
 import ru.luttsev.studio.core.model.parameter.Parameter;
 import ru.luttsev.studio.core.model.reference.ReferenceOr;
-import ru.luttsev.studio.core.model.response.ApiResponse;
-import ru.luttsev.studio.core.model.response.ResponseKey;
+import ru.luttsev.studio.core.model.response.Responses;
 import ru.luttsev.studio.core.model.security.SecurityRequirement;
 import ru.luttsev.studio.core.model.server.Server;
 
@@ -30,7 +29,7 @@ public final class Operation extends ExtensibleObject {
     private String operationId;
     private List<ReferenceOr<Parameter>> parameters = new ArrayList<>();
     private ReferenceOr<RequestBody> requestBody;
-    private Map<ResponseKey, ReferenceOr<ApiResponse>> responses = new LinkedHashMap<>();
+    private Responses responses = new Responses();
     private Map<String, ReferenceOr<Callback>> callbacks = new LinkedHashMap<>();
     private Boolean deprecated;
     private List<SecurityRequirement> security = new ArrayList<>();
