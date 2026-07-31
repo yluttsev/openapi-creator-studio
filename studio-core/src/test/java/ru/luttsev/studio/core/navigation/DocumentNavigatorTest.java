@@ -87,6 +87,24 @@ class DocumentNavigatorTest {
     }
 
     @Test
+    void exposesResponseObjectExtensionsAtTheirSemanticPath() {
+        DocumentFixture fixture = createDocument();
+        fixture.operation()
+                .getResponses()
+                .getAdditionalFields()
+                .put("x-display-group", new StringValue("Users"));
+
+        StringValue displayGroup = navigator.find(
+                        fixture.document(),
+                        DocumentPath.parse(
+                                "/paths/~1users~1{id}/get/responses/x-display-group"),
+                        StringValue.class)
+                .orElseThrow();
+
+        assertEquals("Users", displayGroup.value());
+    }
+
+    @Test
     void exposesCustomMethodsThroughAdditionalOperations() {
         DocumentFixture fixture = createDocument();
         Operation customOperation = new Operation();
@@ -168,7 +186,7 @@ class DocumentNavigatorTest {
 
         Operation operation = new Operation();
         operation.setOperationId("getUser");
-        operation.getResponses().put(
+        operation.getResponses().getValues().put(
                 new ResponseKey("200"),
                 new InlineObject<>(response));
 

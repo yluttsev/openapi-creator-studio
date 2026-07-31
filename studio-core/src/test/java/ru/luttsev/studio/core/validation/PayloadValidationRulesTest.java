@@ -97,7 +97,7 @@ class PayloadValidationRulesTest {
         link.setRequestBody(new StringValue("$response.header.Location"));
         ApiResponse response = new ApiResponse();
         response.getLinks().put("user", ValidationFixture.inline(link));
-        source.getResponses().put(
+        source.getResponses().getValues().put(
                 new ResponseKey("201"),
                 ValidationFixture.inline(response));
 
