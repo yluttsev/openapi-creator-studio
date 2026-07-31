@@ -250,23 +250,8 @@ final class SchemaDecoder {
     private static Set<String> decodeStringSet(
             ArrayValue source,
             DecodeContext context) {
-        LinkedHashSet<String> values = new LinkedHashSet<>();
-        if (source == null) {
-            return values;
-        }
-
-        for (int index = 0; index < source.values().size(); index++) {
-            DocumentValue value = source.values().get(index);
-            if (value instanceof StringValue stringValue) {
-                values.add(stringValue.value());
-            } else {
-                context.child(Integer.toString(index)).error(
-                        OpenApiDiagnosticCodes.MAPPING_TYPE_MISMATCH,
-                        "Expected string but found "
-                                + ObjectValueReader.typeOf(value));
-            }
-        }
-        return values;
+        return new LinkedHashSet<>(
+                ArrayValueMapper.mapStrings(source, context));
     }
 
     private static List<DocumentValue> decodeExamples(

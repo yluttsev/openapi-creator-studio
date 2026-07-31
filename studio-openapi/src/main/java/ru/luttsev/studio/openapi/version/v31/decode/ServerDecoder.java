@@ -1,10 +1,12 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import ru.luttsev.studio.core.model.server.Server;
 import ru.luttsev.studio.core.model.server.ServerVariable;
+import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
@@ -27,6 +29,12 @@ final class ServerDecoder {
                 context.child("variables")));
         AdditionalFieldsMapper.copy(source, server, MAPPED_FIELDS);
         return server;
+    }
+
+    List<Server> decodeList(
+            ArrayValue source,
+            DecodeContext context) {
+        return ArrayValueMapper.mapObjects(source, context, this::decode);
     }
 
     private Map<String, ServerVariable> decodeVariables(

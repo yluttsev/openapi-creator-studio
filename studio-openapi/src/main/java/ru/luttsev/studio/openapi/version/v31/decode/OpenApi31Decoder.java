@@ -7,6 +7,7 @@ import ru.luttsev.studio.core.model.Components;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.info.Info;
+import ru.luttsev.studio.core.model.path.Paths;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.core.navigation.DocumentPath;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
@@ -21,11 +22,12 @@ import ru.luttsev.studio.openapi.version.OpenApiVersionFamily;
 public final class OpenApi31Decoder {
 
     private static final Set<String> MAPPED_FIELDS =
-            Set.of("openapi", "info", "jsonSchemaDialect", "components");
+            Set.of("openapi", "info", "jsonSchemaDialect", "paths", "components");
     private static final DocumentPath VERSION_PATH =
             DocumentPath.root().child("openapi");
 
     private final InfoDecoder infoDecoder = new InfoDecoder();
+    private final PathsDecoder pathsDecoder = new PathsDecoder();
     private final ComponentsDecoder componentsDecoder = new ComponentsDecoder();
 
     public AdapterResult<OpenApiDocument> decode(
@@ -64,6 +66,14 @@ public final class OpenApi31Decoder {
 
         document.setJsonSchemaDialect(
                 reader.optionalUriReference("jsonSchemaDialect"));
+
+        ObjectValue pathsSource = reader.optionalObject("paths");
+        if (pathsSource != null) {
+            Paths paths = pathsDecoder.decode(
+                    pathsSource,
+                    context.child("paths"));
+            document.setPaths(paths);
+        }
 
         ObjectValue componentsSource = reader.optionalObject("components");
         if (componentsSource != null) {

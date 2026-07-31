@@ -1,6 +1,8 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import ru.luttsev.studio.core.model.link.Link;
@@ -15,6 +17,7 @@ import ru.luttsev.studio.core.model.reference.InlineObject;
 import ru.luttsev.studio.core.model.reference.ReferenceOr;
 import ru.luttsev.studio.core.model.response.ApiResponse;
 import ru.luttsev.studio.core.model.schema.Schema;
+import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
@@ -76,6 +79,27 @@ final class PayloadDecoder {
                         parameterDecoder.decode(object, childContext, this));
     }
 
+    List<ReferenceOr<Parameter>> decodeParameterList(
+            ArrayValue source,
+            DecodeContext context) {
+        ArrayList<ReferenceOr<Parameter>> parameters = new ArrayList<>();
+        if (source == null) {
+            return parameters;
+        }
+
+        for (int index = 0; index < source.values().size(); index++) {
+            ReferenceOr<Parameter> parameter = referenceOrDecoder.decode(
+                    source.values().get(index),
+                    context.child(Integer.toString(index)),
+                    (object, childContext) ->
+                            parameterDecoder.decode(object, childContext, this));
+            if (parameter != null) {
+                parameters.add(parameter);
+            }
+        }
+        return parameters;
+    }
+
     Map<String, ReferenceOr<RequestBody>> decodeRequestBodies(
             ObjectValue source,
             DecodeContext context) {
@@ -86,10 +110,30 @@ final class PayloadDecoder {
                         requestBodyDecoder.decode(object, childContext, this));
     }
 
+    ReferenceOr<RequestBody> decodeRequestBody(
+            DocumentValue source,
+            DecodeContext context) {
+        return referenceOrDecoder.decode(
+                source,
+                context,
+                (object, childContext) ->
+                        requestBodyDecoder.decode(object, childContext, this));
+    }
+
     Map<String, ReferenceOr<ApiResponse>> decodeResponses(
             ObjectValue source,
             DecodeContext context) {
         return referenceOrDecoder.decodeMap(
+                source,
+                context,
+                (object, childContext) ->
+                        apiResponseDecoder.decode(object, childContext, this));
+    }
+
+    ReferenceOr<ApiResponse> decodeResponse(
+            DocumentValue source,
+            DecodeContext context) {
+        return referenceOrDecoder.decode(
                 source,
                 context,
                 (object, childContext) ->
