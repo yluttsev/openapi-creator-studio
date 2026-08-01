@@ -1,10 +1,12 @@
 package ru.luttsev.studio.openapi.version.v31.encode;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import ru.luttsev.studio.core.model.server.Server;
 import ru.luttsev.studio.core.model.server.ServerVariable;
+import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 
@@ -37,6 +39,15 @@ final class ServerEncoder {
                 MAPPED_FIELDS,
                 context);
         return target.build();
+    }
+
+    ArrayValue encodeList(
+            List<Server> source,
+            EncodeContext context) {
+        return ArrayValueEncoder.encodeObjects(
+                source,
+                context,
+                this::encode);
     }
 
     private ObjectValue encodeVariables(
