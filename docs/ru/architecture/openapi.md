@@ -6,9 +6,8 @@
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-08-01. Decoder OpenAPI 3.1 реализован, включая корневые
 поля, paths, operations, callbacks, webhooks, schemas, payload, security
-schemes и links. Фундамент encoder-а OpenAPI 3.1, а также schema-, payload-,
-paths/operations- и components-срезы реализованы; encoder корневого документа
-ещё в работе.
+schemes и links. Encoder OpenAPI 3.1 реализован, включая schema-, payload-,
+paths/operations-, components- и корневой срезы.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -260,7 +259,13 @@ reference-encoder-ы для всех секций Components Object из OpenAPI
 mutual TLS, OAuth 2.0 и OpenID Connect. Поля OpenAPI 3.2 для component media
 types, device authorization flow, URL метаданных OAuth и признака устаревания
 security scheme создают compatibility errors и не попадают в OpenAPI 3.1.
-Encoder корневого документа будет добавлен следующим срезом.
+
+`OpenApi31Encoder` собирает полный корневой документ и является публичной
+границей кодирования OpenAPI 3.1. Запрошенная целевая patch-версия выводится в
+поле `openapi`. При compatibility errors возвращается `AdapterFailure`, а не
+частичный документ. Корневое поле `self` и поля Tag Object `summary`, `parent`
+и `kind`, доступные только в OpenAPI 3.2, отклоняются по точным путям документа
+при экспорте в OpenAPI 3.1.
 
 ## План реализации
 
@@ -268,8 +273,7 @@ Encoder корневого документа будет добавлен сле
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
-5. OpenAPI 3.1 encoder. Фундамент, schema-, payload-, paths/operations- и
-   components-срезы реализованы; корневой срез в работе.
+5. OpenAPI 3.1 encoder. Реализован.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.
