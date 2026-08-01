@@ -2,12 +2,10 @@
 
 Language: **English** · [Русский](../../ru/architecture/openapi.md)
 
-Status: public contracts, the version adapter boundary, the YAML/JSON syntax
-layer, version detection, and OpenAPI 3.1 structural validation are
-implemented as of 2026-08-01. The OpenAPI 3.1 decoder is implemented,
-including root fields, paths, operations, callbacks, webhooks, schemas,
-payloads, security schemes, and links. The OpenAPI 3.1 encoder is implemented,
-including its schema, payload, paths/operations, components, and root slices.
+Status: end-to-end OpenAPI 3.1 import and export are implemented as of
+2026-08-01, including strict YAML/JSON syntax, version detection, structural
+and semantic validation, version-specific decoding and encoding, diagnostics,
+and YAML/JSON round-trip tests.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -48,9 +46,20 @@ content
 Any error produces `ImportFailure` without a document. Warnings do not block
 the operation.
 
-Export follows the reverse direction. It validates the core document and
-target-version compatibility before serialization. Export never silently
-drops unsupported data.
+Strict export:
+
+```text
+OpenApiDocument
+-> core semantic validation
+-> select target-version adapter
+-> encode from core
+-> structural validation of encoded syntax
+-> serialize as YAML or JSON
+-> ExportSuccess or ExportFailure
+```
+
+Export never silently drops unsupported data. Any compatibility, structural,
+or serialization error produces `ExportFailure` without partial content.
 
 Semantic round-trip is required. Original comments, YAML anchors, quoting,
 whitespace, and field formatting are not preserved.
@@ -62,6 +71,10 @@ given explicitly or detected automatically.
 
 `OpenApiExporter` accepts an `OpenApiDocument` and `ExportOptions` containing
 the target format and OpenAPI version.
+
+`DefaultOpenApiImporter` and `DefaultOpenApiExporter` implement these complete
+pipelines. Their dependency-injection constructors allow individual boundaries
+to be replaced in tests or application composition.
 
 The sealed results are:
 
@@ -159,9 +172,9 @@ whether it supports a version and provides:
 support is an expected import/export diagnostic. More than one matching
 adapter is a configuration error.
 
-The first implementation will target OpenAPI 3.1.2. OpenAPI 3.0 and 3.2 will
-be added as separate adapters rather than conditional branches spread across
-the module.
+`OpenApi31VersionAdapter` is the first implementation and supports the OpenAPI
+3.1 patch family. OpenAPI 3.0 and 3.2 will be added as separate adapters rather
+than conditional branches spread across the module.
 
 ## OpenAPI 3.1 decoder
 
@@ -272,18 +285,19 @@ paths when targeting OpenAPI 3.1.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
 5. OpenAPI 3.1 encoder. Implemented.
-6. Import/export orchestration.
-7. Strict semantic validation integration.
-8. Round-trip and fixture-based integration tests.
+6. Import/export orchestration. Implemented.
+7. Strict semantic validation integration. Implemented.
+8. Round-trip and fixture-based integration tests. Implemented.
 
-Official schemas will be stored as versioned resources. They will not be
-downloaded at application runtime.
+Official schemas are stored as versioned resources and are not downloaded at
+application runtime.
 
 ## Testing
 
 Tests enforce option, diagnostic, result, registry, strict syntax, version
-detection, structural validation, numeric precision, and JSON/YAML round-trip
-invariants. Each later layer must add valid, invalid, and round-trip fixtures.
+detection, structural and semantic validation, numeric precision, mapping,
+and complete JSON/YAML import/export round-trip invariants. Future version
+adapters must add valid, invalid, and round-trip fixtures.
 
 Run:
 

@@ -2,12 +2,10 @@
 
 Язык: **Русский** · [English](../../en/architecture/openapi.md)
 
-Статус: публичные контракты, граница version adapter, syntax layer для
-YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
-реализованы на 2026-08-01. Decoder OpenAPI 3.1 реализован, включая корневые
-поля, paths, operations, callbacks, webhooks, schemas, payload, security
-schemes и links. Encoder OpenAPI 3.1 реализован, включая schema-, payload-,
-paths/operations-, components- и корневой срезы.
+Статус: end-to-end импорт и экспорт OpenAPI 3.1 реализованы на 2026-08-01,
+включая строгий синтаксис YAML/JSON, определение версии, структурную и
+семантическую валидацию, version-specific decoding и encoding, diagnostics и
+round-trip тесты YAML/JSON.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -47,9 +45,21 @@ content
 Любая ошибка приводит к `ImportFailure` без документа. Warnings операцию не
 блокируют.
 
-Экспорт проходит в обратном направлении. Перед serialization проверяются
-core-документ и совместимость с целевой версией. Неподдержанные данные нельзя
-молча отбрасывать.
+Строгий экспорт:
+
+```text
+OpenApiDocument
+-> core semantic validation
+-> select target-version adapter
+-> encode from core
+-> structural validation of encoded syntax
+-> serialize as YAML or JSON
+-> ExportSuccess or ExportFailure
+```
+
+При экспорте неподдержанные данные нельзя молча отбрасывать. Любая ошибка
+совместимости, структуры или serialization приводит к `ExportFailure` без
+частичного содержимого.
 
 Требуется семантический round-trip. Исходные комментарии, YAML anchors,
 кавычки, пробелы и форматирование полей не сохраняются.
@@ -61,6 +71,10 @@ core-документ и совместимость с целевой верси
 
 `OpenApiExporter` принимает `OpenApiDocument` и `ExportOptions` с целевым
 форматом и версией OpenAPI.
+
+`DefaultOpenApiImporter` и `DefaultOpenApiExporter` реализуют эти полные
+конвейеры. Конструкторы с зависимостями позволяют заменять отдельные границы в
+тестах или при сборке приложения.
 
 Sealed results:
 
@@ -160,8 +174,9 @@ version-specific маппинга. `OpenApiStructuralSchemaRegistry` выбир�
 Отсутствие поддержки — ожидаемая diagnostic импорта или экспорта. Несколько
 подходящих адаптеров означают ошибку конфигурации.
 
-Первая реализация будет предназначена для OpenAPI 3.1.2. OpenAPI 3.0 и 3.2
-добавляются отдельными адаптерами, а не условными ветвлениями по всему модулю.
+`OpenApi31VersionAdapter` — первая реализация, поддерживающая семейство patch-
+версий OpenAPI 3.1. OpenAPI 3.0 и 3.2 добавляются отдельными адаптерами, а не
+условными ветвлениями по всему модулю.
 
 ## Decoder OpenAPI 3.1
 
@@ -274,19 +289,19 @@ security scheme создают compatibility errors и не попадают в 
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
 5. OpenAPI 3.1 encoder. Реализован.
-6. Orchestration импорта/экспорта.
-7. Интеграция строгой семантической валидации.
-8. Round-trip и интеграционные тесты на fixtures.
+6. Orchestration импорта/экспорта. Реализован.
+7. Интеграция строгой семантической валидации. Реализована.
+8. Round-trip и интеграционные тесты на fixtures. Реализованы.
 
-Официальные схемы будут храниться как версионированные resources. Во время
-работы приложения они не скачиваются.
+Официальные схемы хранятся как версионированные resources и не скачиваются во
+время работы приложения.
 
 ## Тестирование
 
 Тесты фиксируют инварианты options, diagnostics, results, registry, строгого
-parsing, определения версии, структурной валидации, точности чисел и round-trip
-JSON/YAML. Каждый следующий слой должен добавлять valid, invalid и round-trip
-fixtures.
+parsing, определения версии, структурной и семантической валидации, точности
+чисел, mapping и полного import/export round-trip JSON/YAML. Будущие version
+adapters должны добавлять valid, invalid и round-trip fixtures.
 
 Запуск:
 

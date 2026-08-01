@@ -2,7 +2,7 @@
 
 Language: **English** · [Русский](../ru/backend-context.md)
 
-Status: current backend architecture context as of 2026-07-30.
+Status: current backend architecture context as of 2026-08-01.
 
 This document records accepted decisions and module boundaries. Details that
 have not been designed yet are marked as planned and must not be treated as
@@ -25,7 +25,7 @@ logic to YAML, JSON, HTTP, Spring, or a particular storage technology.
 | Module | Responsibility | Current state |
 | --- | --- | --- |
 | `studio-core` | In-memory document model, creation, navigation, references, semantic validation, and editing commands | Implemented and covered by tests |
-| `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | Public contracts, version adapter boundary, strict YAML/JSON syntax layer, and version detection implemented; schema validation, orchestration, and 3.1 mapping planned |
+| `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | End-to-end strict import and export for OpenAPI 3.1 implemented and covered by round-trip tests |
 | `studio-app` | Spring Boot composition root, future REST API, application services, and infrastructure integration | Runnable Spring Boot application created; application architecture is not designed yet |
 
 Dependencies point inward:
@@ -45,11 +45,11 @@ Detailed architecture documentation:
 ## OpenAPI version strategy
 
 The target and default version for the first release is OpenAPI `3.1.2`. The
-current core validator selects semantic rules for the `3.1.x` family. The
-syntax parser, writer, and universal version detector exist, but
-version-specific mapping does not, so this does not mean that end-to-end
-import and export support is complete. Version detection only validates and
-reads `major.minor.patch`; adapter selection decides whether it is supported.
+current core validator selects semantic rules for the `3.1.x` family. Strict
+YAML/JSON parsing, structural validation, version-specific mapping, semantic
+validation, and serialization are connected by the import/export pipelines.
+Version detection validates and reads `major.minor.patch`; adapter selection
+decides whether it is supported.
 
 The architecture is intended to support `3.0.x` and `3.2.x` later:
 
@@ -150,8 +150,6 @@ and application services have not been defined yet.
 
 ## Deferred decisions
 
-- import/export orchestration in `studio-openapi`;
-- pinned structural schemas and OpenAPI 3.1 mapping;
 - REST API and DTO shape;
 - document sessions, persistence, and concurrent editing;
 - undo/redo and command history;
