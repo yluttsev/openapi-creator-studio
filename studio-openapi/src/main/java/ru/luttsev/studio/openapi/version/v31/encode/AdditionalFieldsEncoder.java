@@ -18,17 +18,34 @@ final class AdditionalFieldsEncoder {
             Set<String> mappedFields,
             EncodeContext context) {
         Objects.requireNonNull(source, "source must not be null");
+        copy(
+                source.getAdditionalFields(),
+                "Additional field",
+                target,
+                mappedFields,
+                context);
+    }
+
+    static void copy(
+            Map<String, DocumentValue> source,
+            String valueDescription,
+            ObjectValueBuilder target,
+            Set<String> mappedFields,
+            EncodeContext context) {
+        Objects.requireNonNull(source, "source must not be null");
+        Objects.requireNonNull(
+                valueDescription,
+                "valueDescription must not be null");
         Objects.requireNonNull(target, "target must not be null");
         Objects.requireNonNull(mappedFields, "mappedFields must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        for (Map.Entry<String, DocumentValue> entry
-                : source.getAdditionalFields().entrySet()) {
+        for (Map.Entry<String, DocumentValue> entry : source.entrySet()) {
             String field = entry.getKey();
             if (mappedFields.contains(field)) {
                 context.child(field).error(
                         OpenApiDiagnosticCodes.VERSION_FIELD_CONFLICT,
-                        "Additional field '" + field
+                        valueDescription + " '" + field
                                 + "' conflicts with a mapped OpenAPI "
                                 + context.targetVersion().value()
                                 + " field");

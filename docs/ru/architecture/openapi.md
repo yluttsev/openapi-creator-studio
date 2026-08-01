@@ -6,8 +6,8 @@
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-07-31. Decoder OpenAPI 3.1 реализован, включая корневые
 поля, paths, operations, callbacks, webhooks, schemas, payload, security
-schemes и links. Фундамент encoder-а OpenAPI 3.1 реализован; предметные
-encoder-ы ещё в работе.
+schemes и links. Фундамент encoder-а OpenAPI 3.1 и рекурсивный encoder Schema
+Object реализованы; остальные предметные encoder-ы ещё в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -221,9 +221,17 @@ Encoder преобразует нормализованную core-модель 
 их представления `DocumentValue`. Если ключ одновременно является стандартным
 полем OpenAPI 3.1 и дополнительным полем, это ошибка совместимости:
 типизированное свойство core остаётся источником истины, а конфликтующее
-дополнительное значение не подставляется молча. Предметные encoder-ы schemas,
-payload, paths, operations и корневого документа будут добавлены следующими
-срезами.
+дополнительное значение не подставляется молча.
+
+`SchemaEncoder` рекурсивно преобразует логические boolean schemas и Schema
+Definitions, включая types, formats, references, examples, constraints,
+properties, arrays, composition, discriminators и неизвестные ключевые слова
+JSON Schema. Один type выводится строкой, несколько types — массивом.
+Нормализованные examples выводятся через массив JSON Schema `examples`.
+Поле discriminator `defaultMapping`, доступное только в OpenAPI 3.2, при
+экспорте в OpenAPI 3.1 создаёт compatibility error неподдерживаемого поля.
+Encoder-ы payload, paths, operations и корневого документа будут добавлены
+следующими срезами.
 
 ## План реализации
 
@@ -231,7 +239,8 @@ payload, paths, operations и корневого документа будут �
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
-5. OpenAPI 3.1 encoder. Фундамент реализован; предметные encoder-ы в работе.
+5. OpenAPI 3.1 encoder. Фундамент и schema-срез реализованы; остальные
+   предметные encoder-ы в работе.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.
