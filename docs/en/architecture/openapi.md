@@ -6,9 +6,8 @@ Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-08-01. The OpenAPI 3.1 decoder is implemented,
 including root fields, paths, operations, callbacks, webhooks, schemas,
-payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation and
-its schema, payload, paths/operations, and components slices are implemented;
-the root encoder is still in progress.
+payloads, security schemes, and links. The OpenAPI 3.1 encoder is implemented,
+including its schema, payload, paths/operations, components, and root slices.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -257,7 +256,14 @@ reference encoders for every OpenAPI 3.1 Components Object section.
 mutual TLS, OAuth 2.0, and OpenID Connect schemes. OpenAPI 3.2-only component
 media types, device authorization flow fields, OAuth metadata URLs, and
 security scheme deprecation flags produce compatibility errors and are omitted
-from OpenAPI 3.1 output. The root encoder will be added in the next slice.
+from OpenAPI 3.1 output.
+
+`OpenApi31Encoder` assembles the complete root document and is the public
+OpenAPI 3.1 encoding boundary. The requested target patch version is emitted
+as the `openapi` value. Compatibility errors return `AdapterFailure` rather
+than a partial document. The OpenAPI 3.2-only root `self` field and Tag Object
+`summary`, `parent`, and `kind` fields are rejected at their exact document
+paths when targeting OpenAPI 3.1.
 
 ## Planned implementation sequence
 
@@ -265,8 +271,7 @@ from OpenAPI 3.1 output. The root encoder will be added in the next slice.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
-5. OpenAPI 3.1 encoder. Foundation, schema, payload, paths/operations, and
-   components slices implemented; root slice in progress.
+5. OpenAPI 3.1 encoder. Implemented.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.
