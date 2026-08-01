@@ -2,7 +2,7 @@
 
 Язык: **Русский** · [English](../../en/architecture/core.md)
 
-Статус: реализованная архитектура ядра на 2026-07-30.
+Статус: реализованная архитектура ядра на 2026-08-01.
 
 Исходный код находится в
 `studio-core/src/main/java/ru/luttsev/studio/core`.
@@ -70,6 +70,14 @@ callbacks и path items.
 ответов по `ResponseKey` и наследует `ExtensibleObject`, поэтому поля вроде
 `x-*` extensions остаются на уровне Responses Object и не переносятся в
 операцию.
+
+Для security на уровне операции сохраняется присутствие поля, потому что его
+отсутствие и пустой массив имеют в OpenAPI разный смысл. Новая `Operation`
+наследует корневую security и возвращает `hasSecurityOverride() == false`.
+Вызов `setSecurity` или изменение списка из `getSecurity` задаёт override,
+даже если список пуст. `inheritSecurity()` удаляет override и возвращает
+наследование. Сам список остаётся изменяемым и никогда не равен `null`, как и
+остальные коллекции core.
 
 Большинство моделей наследует `ExtensibleObject`. Его `additionalFields`
 хранит неизвестные поля и `x-*` extensions в виде `DocumentValue`.
