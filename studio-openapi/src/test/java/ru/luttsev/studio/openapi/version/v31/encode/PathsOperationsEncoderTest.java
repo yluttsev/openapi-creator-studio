@@ -174,6 +174,34 @@ class PathsOperationsEncoderTest {
                 "/paths/~1search/additionalOperations/COPY");
     }
 
+    @Test
+    void roundTripsInheritedAndExplicitlyDisabledSecurity() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                info:
+                  title: Security API
+                  version: 1.0.0
+                paths:
+                  /inherits:
+                    get:
+                      responses: { "200": { description: OK } }
+                  /disabled:
+                    get:
+                      security: []
+                      responses: { "200": { description: OK } }
+                """);
+        OpenApiDocument document = decode(source);
+        EncodeContext context = EncodeContext.root(OpenApiVersion.V3_1_2)
+                .child("paths");
+
+        ObjectValue encoded = new PathsEncoder().encode(
+                document.getPaths(),
+                context);
+
+        assertEquals(object(source.values().get("paths")), encoded);
+        assertTrue(context.diagnostics().isEmpty());
+    }
+
     private static void assertDiagnostic(
             List<OpenApiDiagnostic> diagnostics,
             String path) {

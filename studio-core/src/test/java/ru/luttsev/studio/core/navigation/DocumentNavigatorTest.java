@@ -126,6 +126,19 @@ class DocumentNavigatorTest {
     }
 
     @Test
+    void exposesOperationSecurityOnlyWhenOverrideIsDefined() {
+        DocumentFixture fixture = createDocument();
+        DocumentPath securityPath = DocumentPath.parse(
+                "/paths/~1users~1{id}/get/security");
+
+        assertTrue(navigator.find(fixture.document(), securityPath).isEmpty());
+
+        fixture.operation().setSecurity(List.of());
+
+        assertTrue(navigator.find(fixture.document(), securityPath).isPresent());
+    }
+
+    @Test
     void walksDocumentUsingAddressableOpenApiPaths() {
         DocumentFixture fixture = createDocument();
 
