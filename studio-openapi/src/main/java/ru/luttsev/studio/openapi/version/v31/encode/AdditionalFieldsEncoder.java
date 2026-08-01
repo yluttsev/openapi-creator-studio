@@ -46,9 +46,8 @@ final class AdditionalFieldsEncoder {
                 context.child(field).error(
                         OpenApiDiagnosticCodes.VERSION_FIELD_CONFLICT,
                         valueDescription + " '" + field
-                                + "' conflicts with a mapped OpenAPI "
-                                + context.targetVersion().value()
-                                + " field");
+                                + "' conflicts with a typed field while encoding OpenAPI "
+                                + context.targetVersion().value());
                 continue;
             }
             target.put(field, entry.getValue());

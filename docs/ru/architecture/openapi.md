@@ -4,10 +4,11 @@
 
 Статус: публичные контракты, граница version adapter, syntax layer для
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
-реализованы на 2026-07-31. Decoder OpenAPI 3.1 реализован, включая корневые
+реализованы на 2026-08-01. Decoder OpenAPI 3.1 реализован, включая корневые
 поля, paths, operations, callbacks, webhooks, schemas, payload, security
-schemes и links. Фундамент encoder-а OpenAPI 3.1 и рекурсивный encoder Schema
-Object реализованы; остальные предметные encoder-ы ещё в работе.
+schemes и links. Фундамент encoder-а OpenAPI 3.1, рекурсивный encoder Schema
+Object и payload encoder реализованы; encoder-ы paths, operations и корневого
+документа ещё в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -230,8 +231,15 @@ JSON Schema. Один type выводится строкой, несколько
 Нормализованные examples выводятся через массив JSON Schema `examples`.
 Поле discriminator `defaultMapping`, доступное только в OpenAPI 3.2, при
 экспорте в OpenAPI 3.1 создаёт compatibility error неподдерживаемого поля.
-Encoder-ы payload, paths, operations и корневого документа будут добавлены
-следующими срезами.
+
+`PayloadEncoder` преобразует examples, parameters, headers, request bodies,
+responses, media types, encodings, links и их inline/reference-формы. Вложенные
+Schema Objects делегируются `SchemaEncoder`, а extensions сохраняются во всём
+payload-графе. Поля payload из OpenAPI 3.2 при экспорте в OpenAPI 3.1 создают
+точные compatibility diagnostics. Reference Object непосредственно вместо
+Media Type также отклоняется, поскольку Content Object в OpenAPI 3.1 допускает
+только inline Media Type Objects. Encoder-ы paths, operations и корневого
+документа будут добавлены следующими срезами.
 
 ## План реализации
 
@@ -239,8 +247,8 @@ Encoder-ы payload, paths, operations и корневого документа �
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
-5. OpenAPI 3.1 encoder. Фундамент и schema-срез реализованы; остальные
-   предметные encoder-ы в работе.
+5. OpenAPI 3.1 encoder. Фундамент, schema- и payload-срезы реализованы; paths,
+   operations и корневой срез в работе.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.

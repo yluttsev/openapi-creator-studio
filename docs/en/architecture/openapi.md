@@ -4,11 +4,11 @@ Language: **English** · [Русский](../../ru/architecture/openapi.md)
 
 Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
-implemented as of 2026-07-31. The OpenAPI 3.1 decoder is implemented,
+implemented as of 2026-08-01. The OpenAPI 3.1 decoder is implemented,
 including root fields, paths, operations, callbacks, webhooks, schemas,
-payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation and
-recursive Schema Object encoder are implemented; the remaining domain
-encoders are still in progress.
+payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation,
+recursive Schema Object encoder, and payload encoder are implemented; path,
+operation, and root encoders are still in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -227,8 +227,16 @@ properties, arrays, composition, discriminators, and unknown JSON Schema
 keywords. One type is emitted as a string and multiple types as an array.
 Normalized examples are emitted through the JSON Schema `examples` array.
 The OpenAPI 3.2-only discriminator field `defaultMapping` produces an
-unsupported-field compatibility error when targeting OpenAPI 3.1. Payload,
-path, operation, and root encoders will be added in subsequent slices.
+unsupported-field compatibility error when targeting OpenAPI 3.1.
+
+`PayloadEncoder` maps examples, parameters, headers, request bodies,
+responses, media types, encodings, links, and their inline/reference forms.
+It delegates nested Schema Objects to `SchemaEncoder` and preserves extensions
+throughout the payload graph. OpenAPI 3.2-only payload fields produce precise
+compatibility diagnostics when targeting OpenAPI 3.1. A Reference Object used
+directly as a Media Type is also rejected because OpenAPI 3.1 Content Objects
+only allow inline Media Type Objects. Path, operation, and root encoders will
+be added in subsequent slices.
 
 ## Planned implementation sequence
 
@@ -236,8 +244,8 @@ path, operation, and root encoders will be added in subsequent slices.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
-5. OpenAPI 3.1 encoder. Foundation and schema slice implemented; remaining
-   domain encoders in progress.
+5. OpenAPI 3.1 encoder. Foundation, schema, and payload slices implemented;
+   path, operation, and root slices in progress.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.
