@@ -50,6 +50,20 @@ final class PathItemEncoder {
     }
 
     ObjectValue encode(PathItem source, EncodeContext context) {
+        if (!context.enter(source)) {
+            context.mappingError(
+                    OpenApiDiagnosticCodes.MAPPING_CYCLIC_INLINE_OBJECT,
+                    "Cyclic inline Path Item cannot be encoded");
+            return new ObjectValueBuilder().build();
+        }
+        try {
+            return encodeValue(source, context);
+        } finally {
+            context.leave(source);
+        }
+    }
+
+    private ObjectValue encodeValue(PathItem source, EncodeContext context) {
         ObjectValueBuilder target = new ObjectValueBuilder();
         if (source.getRef() != null) {
             target.putString("$ref", source.getRef().value());
@@ -83,16 +97,10 @@ final class PathItemEncoder {
     ObjectValue encodeMap(
             Map<String, PathItem> source,
             EncodeContext context) {
-        ObjectValueBuilder target = new ObjectValueBuilder();
-        if (source == null) {
-            return target.build();
-        }
-        for (Map.Entry<String, PathItem> entry : source.entrySet()) {
-            target.put(
-                    entry.getKey(),
-                    encode(entry.getValue(), context.child(entry.getKey())));
-        }
-        return target.build();
+        return ObjectValueEncoder.encodeObjects(
+                source,
+                context,
+                this::encode);
     }
 
     private void encodeOperations(

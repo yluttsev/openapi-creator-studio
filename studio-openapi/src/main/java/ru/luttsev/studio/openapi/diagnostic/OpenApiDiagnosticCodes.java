@@ -26,6 +26,8 @@ public final class OpenApiDiagnosticCodes {
             new DiagnosticCode("openapi.mapping.type-mismatch");
     public static final DiagnosticCode MAPPING_INVALID_VALUE =
             new DiagnosticCode("openapi.mapping.invalid-value");
+    public static final DiagnosticCode MAPPING_CYCLIC_INLINE_OBJECT =
+            new DiagnosticCode("openapi.mapping.cyclic-inline-object");
     public static final DiagnosticCode MAPPING_VERSION_MISMATCH =
             new DiagnosticCode("openapi.mapping.version-mismatch");
     public static final DiagnosticCode UNSUPPORTED_MAPPING_VERSION =

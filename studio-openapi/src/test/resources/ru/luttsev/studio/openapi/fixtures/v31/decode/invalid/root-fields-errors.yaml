@@ -1,0 +1,20 @@
+openapi: 3.1.2
+info:
+  title: Broken API
+  version: 1.0.0
+paths: {}
+servers:
+  - invalid
+  - description: Missing URL
+security:
+  - invalid
+  - OAuth2: invalid
+tags:
+  - invalid
+  - description: Missing name
+  - name: Invalid docs
+    externalDocs: invalid
+  - name: Missing docs URL
+    externalDocs:
+      description: Missing URL
+externalDocs: invalid

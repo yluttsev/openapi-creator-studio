@@ -1,0 +1,21 @@
+openapi: 3.1.2
+info:
+  title: Broken Events API
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses: {}
+      callbacks:
+        invalidReferenceOr: 42
+        invalidExpression:
+          not-an-expression: invalid
+webhooks:
+  broken: invalid
+components:
+  callbacks:
+    Broken: 42
+    BrokenExpression:
+      not-an-expression: invalid
+  pathItems:
+    Broken: invalid

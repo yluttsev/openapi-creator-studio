@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import ru.luttsev.studio.core.model.media.MediaTypeName;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
-import ru.luttsev.studio.core.model.media.MediaTypeName;
 import ru.luttsev.studio.core.model.parameter.Parameter;
 import ru.luttsev.studio.core.model.parameter.ParameterLocation;
 import ru.luttsev.studio.core.model.path.HttpMethod;
@@ -35,6 +35,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class PathsOperationsDecoderTest {
 
@@ -42,68 +43,8 @@ class PathsOperationsDecoderTest {
 
     @Test
     void decodesPathsPathItemsAndOperations() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Users API
-                  version: 1.0.0
-                paths:
-                  x-paths-owner: platform
-                  /users/{id}:
-                    summary: User resource
-                    description: Operations on a user
-                    parameters:
-                      - $ref: "#/components/parameters/UserId"
-                    servers:
-                      - url: https://{environment}.example.com
-                        description: Path server
-                        variables:
-                          environment:
-                            default: api
-                            enum: [api, staging]
-                        x-server-level: path
-                    get:
-                      tags: [users, read]
-                      summary: Get user
-                      description: Finds one user
-                      externalDocs:
-                        description: User guide
-                        url: https://example.com/docs/users
-                        x-doc-id: users
-                      operationId: getUser
-                      parameters:
-                        - name: include
-                          in: query
-                          schema:
-                            type: string
-                      requestBody:
-                        $ref: "#/components/requestBodies/SearchOptions"
-                      responses:
-                        "200":
-                          description: User found
-                          content:
-                            application/json:
-                              schema:
-                                $ref: "#/components/schemas/User"
-                        2XX:
-                          $ref: "#/components/responses/Success"
-                        default:
-                          $ref: "#/components/responses/Error"
-                        x-display-group: Users
-                      deprecated: false
-                      security:
-                        - OAuth2: [users:read]
-                          ApiKey: []
-                        - {}
-                      servers:
-                        - url: https://api.example.com
-                      callbacks: {}
-                      x-operation-owner: users-team
-                    x-path-item-id: users-by-id
-                  /shared:
-                    $ref: "#/components/pathItems/Shared"
-                    summary: Shared operations
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/paths-operations.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));
@@ -201,30 +142,8 @@ class PathsOperationsDecoderTest {
 
     @Test
     void decodesEveryOpenApi31HttpMethod() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Methods API
-                  version: 1.0.0
-                paths:
-                  /methods:
-                    get:
-                      responses: { "200": { description: OK } }
-                    put:
-                      responses: { "200": { description: OK } }
-                    post:
-                      responses: { "200": { description: OK } }
-                    delete:
-                      responses: { "200": { description: OK } }
-                    options:
-                      responses: { "200": { description: OK } }
-                    head:
-                      responses: { "200": { description: OK } }
-                    patch:
-                      responses: { "200": { description: OK } }
-                    trace:
-                      responses: { "200": { description: OK } }
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/all-http-methods.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));
@@ -283,27 +202,8 @@ class PathsOperationsDecoderTest {
 
     @Test
     void reportsPathAndOperationMappingErrorsAtExactPaths() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Broken API
-                  version: 1.0.0
-                paths:
-                  /broken: invalid
-                  /users:
-                    get:
-                      tags: [users, 42]
-                      parameters: [invalid]
-                      requestBody: 42
-                      responses:
-                        "200": invalid
-                      security:
-                        - OAuth2: invalid
-                      servers: [invalid]
-                  /missing-responses:
-                    post:
-                      summary: Missing responses
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/invalid/paths-operations-errors.yaml"));
 
         AdapterFailure<?> failure = assertInstanceOf(
                 AdapterFailure.class,

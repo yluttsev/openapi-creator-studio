@@ -1,7 +1,6 @@
 package ru.luttsev.studio.openapi.version.v31.encode;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -15,6 +14,7 @@ import ru.luttsev.studio.core.model.value.BooleanValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.core.model.value.StringValue;
+import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 
 final class SchemaEncoder {
 
@@ -65,8 +65,24 @@ final class SchemaEncoder {
             case LogicalSchema logicalSchema ->
                     new BooleanValue(logicalSchema.isValue());
             case SchemaDefinition definition ->
-                    encodeDefinition(definition, context);
+                    encodeDefinitionGuarded(definition, context);
         };
+    }
+
+    private ObjectValue encodeDefinitionGuarded(
+            SchemaDefinition source,
+            EncodeContext context) {
+        if (!context.enter(source)) {
+            context.mappingError(
+                    OpenApiDiagnosticCodes.MAPPING_CYCLIC_INLINE_OBJECT,
+                    "Cyclic inline Schema cannot be encoded");
+            return new ObjectValueBuilder().build();
+        }
+        try {
+            return encodeDefinition(source, context);
+        } finally {
+            context.leave(source);
+        }
     }
 
     private ObjectValue encodeDefinition(
@@ -188,13 +204,12 @@ final class SchemaEncoder {
             return;
         }
 
-        LinkedHashMap<String, DocumentValue> values = new LinkedHashMap<>();
-        for (Map.Entry<String, Schema> entry : schemas.entrySet()) {
-            values.put(
-                    entry.getKey(),
-                    encode(entry.getValue(), context.child(entry.getKey())));
-        }
-        target.put(field, new ObjectValue(values));
+        target.put(
+                field,
+                ObjectValueEncoder.encodeObjects(
+                        schemas,
+                        context,
+                        this::encode));
     }
 
     private void putSchemaList(
@@ -206,13 +221,12 @@ final class SchemaEncoder {
             return;
         }
 
-        ArrayList<DocumentValue> values = new ArrayList<>(schemas.size());
-        for (int index = 0; index < schemas.size(); index++) {
-            values.add(encode(
-                    schemas.get(index),
-                    context.child(Integer.toString(index))));
-        }
-        target.put(field, new ArrayValue(values));
+        target.put(
+                field,
+                ArrayValueEncoder.encodeObjects(
+                        schemas,
+                        context,
+                        this::encode));
     }
 
     private void putSchema(

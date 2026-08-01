@@ -1,0 +1,48 @@
+openapi: 3.1.2
+info:
+  title: Events API
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      operationId: createOrder
+      responses:
+        "202":
+          description: Accepted
+      callbacks:
+        orderStatus:
+          '{$request.body#/callbackUrl}':
+            post:
+              operationId: reportOrderStatus
+              responses:
+                "204":
+                  description: Status received
+          x-callback-owner: orders-team
+        shared:
+          $ref: "#/components/callbacks/Shared"
+webhooks:
+  orderCreated:
+    post:
+      operationId: orderCreated
+      responses:
+        "204":
+          description: Event received
+  referencedWebhook:
+    $ref: "#/components/pathItems/SharedWebhook"
+components:
+  callbacks:
+    Shared:
+      '{$request.query.callbackUrl}':
+        post:
+          responses:
+            "200":
+              description: Callback accepted
+    SharedAlias:
+      $ref: "#/components/callbacks/Shared"
+  pathItems:
+    SharedWebhook:
+      summary: Shared webhook
+      post:
+        responses:
+          "202":
+            description: Accepted

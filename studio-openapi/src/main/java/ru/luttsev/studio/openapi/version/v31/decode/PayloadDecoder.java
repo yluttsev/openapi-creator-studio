@@ -1,6 +1,5 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,22 +81,16 @@ final class PayloadDecoder {
     List<ReferenceOr<Parameter>> decodeParameterList(
             ArrayValue source,
             DecodeContext context) {
-        ArrayList<ReferenceOr<Parameter>> parameters = new ArrayList<>();
-        if (source == null) {
-            return parameters;
-        }
-
-        for (int index = 0; index < source.values().size(); index++) {
-            ReferenceOr<Parameter> parameter = referenceOrDecoder.decode(
-                    source.values().get(index),
-                    context.child(Integer.toString(index)),
-                    (object, childContext) ->
-                            parameterDecoder.decode(object, childContext, this));
-            if (parameter != null) {
-                parameters.add(parameter);
-            }
-        }
-        return parameters;
+        return ArrayValueMapper.mapValues(
+                source,
+                context,
+                (value, itemContext) -> referenceOrDecoder.decode(
+                        value,
+                        itemContext,
+                        (object, childContext) -> parameterDecoder.decode(
+                                object,
+                                childContext,
+                                this)));
     }
 
     Map<String, ReferenceOr<RequestBody>> decodeRequestBodies(

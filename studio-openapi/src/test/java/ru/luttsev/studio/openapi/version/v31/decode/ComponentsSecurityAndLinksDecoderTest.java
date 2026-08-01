@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.core.model.Components;
+import ru.luttsev.studio.core.model.link.Link;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
-import ru.luttsev.studio.core.model.link.Link;
 import ru.luttsev.studio.core.model.reference.InlineObject;
 import ru.luttsev.studio.core.model.reference.ReferenceObject;
 import ru.luttsev.studio.core.model.response.ApiResponse;
@@ -33,6 +33,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class ComponentsSecurityAndLinksDecoderTest {
 
@@ -40,82 +41,8 @@ class ComponentsSecurityAndLinksDecoderTest {
 
     @Test
     void decodesSecuritySchemesAndLinks() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Users API
-                  version: 1.0.0
-                paths: {}
-                components:
-                  securitySchemes:
-                    ApiKey:
-                      type: apiKey
-                      description: API key
-                      name: X-API-Key
-                      in: header
-                      x-security-id: api-key
-                    Bearer:
-                      type: http
-                      scheme: bearer
-                      bearerFormat: JWT
-                    OAuth:
-                      type: oauth2
-                      flows:
-                        implicit:
-                          authorizationUrl: https://example.com/authorize
-                          refreshUrl: https://example.com/refresh
-                          scopes:
-                            users:read: Read users
-                          x-flow-id: implicit
-                        password:
-                          tokenUrl: https://example.com/token
-                          scopes: {}
-                        clientCredentials:
-                          tokenUrl: https://example.com/token
-                          scopes:
-                            users:write: Write users
-                        authorizationCode:
-                          authorizationUrl: https://example.com/authorize
-                          tokenUrl: https://example.com/token
-                          scopes:
-                            users:read: Read users
-                    OpenId:
-                      type: openIdConnect
-                      openIdConnectUrl: https://example.com/.well-known/openid-configuration
-                    MutualTls:
-                      type: mutualTLS
-                    SharedOAuth:
-                      $ref: "#/components/securitySchemes/OAuth"
-                  links:
-                    UserById:
-                      operationId: getUser
-                      parameters:
-                        userId: "$response.body#/id"
-                      requestBody:
-                        id: "$response.body#/id"
-                      description: Follow the returned user
-                      server:
-                        url: https://{region}.example.com
-                        description: Regional API
-                        variables:
-                          region:
-                            enum: [eu, us]
-                            default: eu
-                            description: API region
-                            x-variable-id: region
-                        x-server-id: regional
-                      x-link-id: user
-                    UserByOperationRef:
-                      operationRef: "#/paths/~1users~1{id}/get"
-                    SharedUserLink:
-                      $ref: "#/components/links/UserById"
-                  responses:
-                    UserResponse:
-                      description: User
-                      links:
-                        self:
-                          $ref: "#/components/links/UserById"
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/components-security-links.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));
@@ -233,42 +160,8 @@ class ComponentsSecurityAndLinksDecoderTest {
 
     @Test
     void reportsSecurityAndLinkMappingErrorsAtExactPaths() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Broken API
-                  version: 1.0.0
-                paths: {}
-                components:
-                  securitySchemes:
-                    Unknown:
-                      type: unsupported
-                    MissingApiKeyFields:
-                      type: apiKey
-                    BrokenOAuth:
-                      type: oauth2
-                      flows:
-                        implicit:
-                          authorizationUrl: https://example.com/authorize
-                          scopes:
-                            users:read: 42
-                  links:
-                    MissingTarget:
-                      description: No operation
-                    BothTargets:
-                      operationId: getUser
-                      operationRef: "#/paths/~1users/get"
-                    BrokenParameters:
-                      operationId: getUser
-                      parameters:
-                        userId: 42
-                    BrokenServer:
-                      operationId: getUser
-                      server:
-                        variables:
-                          region:
-                            enum: [eu, 42]
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/invalid/components-security-links-errors.yaml"));
 
         AdapterFailure<?> failure = assertInstanceOf(
                 AdapterFailure.class,

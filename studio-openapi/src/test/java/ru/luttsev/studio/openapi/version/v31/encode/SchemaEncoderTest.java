@@ -30,6 +30,7 @@ import ru.luttsev.studio.openapi.importing.ImportOptions;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class SchemaEncoderTest {
 
@@ -61,57 +62,8 @@ class SchemaEncoderTest {
 
         DocumentValue encoded = encoder.encode(source, context);
 
-        ObjectValue expected = parseSchema("""
-                type: [object, "null"]
-                format: aggregate
-                $ref: "#/components/schemas/Base"
-                title: User
-                description: User aggregate
-                default: active
-                examples: [first, second]
-                enum: [active, inactive]
-                const: active
-                deprecated: true
-                readOnly: false
-                writeOnly: true
-                properties:
-                  id:
-                    type: string
-                    minLength: 1
-                    maxLength: 36
-                    pattern: "^[a-z]+$"
-                required: [id]
-                additionalProperties: false
-                minProperties: 1
-                maxProperties: 8
-                items: true
-                minItems: 1
-                maxItems: 5
-                uniqueItems: true
-                minLength: 2
-                maxLength: 64
-                pattern: "^[A-Z]"
-                minimum: 0
-                maximum: 100
-                exclusiveMinimum: -1
-                exclusiveMaximum: 101
-                multipleOf: 0.5
-                allOf:
-                  - $ref: "#/components/schemas/Audited"
-                anyOf:
-                  - true
-                oneOf:
-                  - type: string
-                not:
-                  type: "null"
-                discriminator:
-                  propertyName: kind
-                  mapping:
-                    user: "#/components/schemas/User"
-                  x-ui-label: Type
-                unevaluatedProperties: false
-                x-ui-order: 10
-                """);
+        ObjectValue expected = parseSchema(TestResources.readFixture(
+                "v31/encode/schema-definition-expected.fragment.yaml"));
         assertEquals(expected, encoded);
         assertSame(
                 source.getAdditionalKeywords().get("x-ui-order"),

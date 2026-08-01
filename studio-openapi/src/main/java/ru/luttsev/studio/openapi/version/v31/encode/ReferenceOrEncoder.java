@@ -1,12 +1,10 @@
 package ru.luttsev.studio.openapi.version.v31.encode;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import ru.luttsev.studio.core.model.reference.InlineObject;
 import ru.luttsev.studio.core.model.reference.ReferenceObject;
 import ru.luttsev.studio.core.model.reference.ReferenceOr;
-import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 
 final class ReferenceOrEncoder {
@@ -30,20 +28,13 @@ final class ReferenceOrEncoder {
             Map<String, ReferenceOr<T>> source,
             EncodeContext context,
             BiFunction<T, EncodeContext, ObjectValue> inlineEncoder) {
-        LinkedHashMap<String, DocumentValue> values = new LinkedHashMap<>();
-        if (source == null) {
-            return new ObjectValue(values);
-        }
-
-        for (Map.Entry<String, ReferenceOr<T>> entry : source.entrySet()) {
-            values.put(
-                    entry.getKey(),
-                    encode(
-                            entry.getValue(),
-                            context.child(entry.getKey()),
-                            inlineEncoder));
-        }
-        return new ObjectValue(values);
+        return ObjectValueEncoder.encodeObjects(
+                source,
+                context,
+                (value, itemContext) -> encode(
+                        value,
+                        itemContext,
+                        inlineEncoder));
     }
 
     @SuppressWarnings("unchecked")

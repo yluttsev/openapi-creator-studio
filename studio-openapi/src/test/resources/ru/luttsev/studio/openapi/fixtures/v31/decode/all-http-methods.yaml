@@ -1,0 +1,22 @@
+openapi: 3.1.2
+info:
+  title: Methods API
+  version: 1.0.0
+paths:
+  /methods:
+    get:
+      responses: { "200": { description: OK } }
+    put:
+      responses: { "200": { description: OK } }
+    post:
+      responses: { "200": { description: OK } }
+    delete:
+      responses: { "200": { description: OK } }
+    options:
+      responses: { "200": { description: OK } }
+    head:
+      responses: { "200": { description: OK } }
+    patch:
+      responses: { "200": { description: OK } }
+    trace:
+      responses: { "200": { description: OK } }
