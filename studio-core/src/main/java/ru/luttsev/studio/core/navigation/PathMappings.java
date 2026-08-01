@@ -49,7 +49,9 @@ final class PathMappings {
         children.add("responses", operation.getResponses());
         children.add("callbacks", operation.getCallbacks());
         children.add("deprecated", operation.getDeprecated());
-        children.add("security", operation.getSecurity());
+        if (operation.hasSecurityOverride()) {
+            children.add("security", operation.getSecurity());
+        }
         children.add("servers", operation.getServers());
     }
 

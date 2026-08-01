@@ -6,6 +6,7 @@ import ru.luttsev.studio.core.model.info.ExternalDocumentation;
 import ru.luttsev.studio.core.model.media.RequestBody;
 import ru.luttsev.studio.core.model.path.Operation;
 import ru.luttsev.studio.core.model.reference.ReferenceOr;
+import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 
@@ -87,9 +88,12 @@ final class OperationDecoder {
                 pathItemDecoder::decode));
 
         operation.setDeprecated(reader.optionalBoolean("deprecated"));
-        operation.setSecurity(securityRequirementDecoder.decodeList(
-                reader.optionalArray("security"),
-                context.child("security")));
+        ArrayValue securitySource = reader.optionalArray("security");
+        if (securitySource != null) {
+            operation.setSecurity(securityRequirementDecoder.decodeList(
+                    securitySource,
+                    context.child("security")));
+        }
         operation.setServers(serverDecoder.decodeList(
                 reader.optionalArray("servers"),
                 context.child("servers")));
