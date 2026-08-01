@@ -27,6 +27,7 @@ import ru.luttsev.studio.openapi.importing.ImportOptions;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class SchemaDecoderTest {
 
@@ -50,60 +51,8 @@ class SchemaDecoderTest {
 
     @Test
     void decodesSchemaDefinitionRecursively() {
-        ObjectValue source = parseSchema("""
-                type: [object, "null"]
-                format: aggregate
-                $ref: "#/components/schemas/Base"
-                title: User
-                description: User aggregate
-                default: active
-                example: first
-                examples: [second, third]
-                enum: [active, inactive]
-                const: active
-                deprecated: true
-                readOnly: false
-                writeOnly: true
-                properties:
-                  id:
-                    type: string
-                    minLength: 1
-                    maxLength: 36
-                    pattern: "^[a-z]+$"
-                  score:
-                    type: number
-                    minimum: 0
-                    maximum: 100
-                    exclusiveMinimum: -1
-                    exclusiveMaximum: 101
-                    multipleOf: 0.5
-                  tags:
-                    type: array
-                    items:
-                      type: string
-                    minItems: 1
-                    maxItems: 5
-                    uniqueItems: true
-                required: [id]
-                additionalProperties: false
-                minProperties: 1
-                maxProperties: 8
-                allOf:
-                  - $ref: "#/components/schemas/Audited"
-                anyOf:
-                  - true
-                oneOf:
-                  - type: string
-                not:
-                  type: "null"
-                discriminator:
-                  propertyName: kind
-                  mapping:
-                    user: "#/components/schemas/User"
-                  x-ui-label: Type
-                unevaluatedProperties: false
-                x-ui-order: 10
-                """);
+        ObjectValue source = parseSchema(TestResources.readFixture(
+                "v31/decode/schema-definition.fragment.yaml"));
         DecodeContext context = DecodeContext.root(OpenApiVersion.V3_1_2)
                 .child("components")
                 .child("schemas")

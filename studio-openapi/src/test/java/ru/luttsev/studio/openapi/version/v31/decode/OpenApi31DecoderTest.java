@@ -8,16 +8,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.core.model.Components;
-import ru.luttsev.studio.core.model.OpenApiDocument;
-import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.info.Contact;
 import ru.luttsev.studio.core.model.info.Info;
 import ru.luttsev.studio.core.model.info.License;
+import ru.luttsev.studio.core.model.OpenApiDocument;
+import ru.luttsev.studio.core.model.OpenApiVersion;
+import ru.luttsev.studio.core.model.reference.InlineObject;
+import ru.luttsev.studio.core.model.response.ApiResponse;
 import ru.luttsev.studio.core.model.schema.JsonType;
 import ru.luttsev.studio.core.model.schema.LogicalSchema;
 import ru.luttsev.studio.core.model.schema.SchemaDefinition;
-import ru.luttsev.studio.core.model.reference.InlineObject;
-import ru.luttsev.studio.core.model.response.ApiResponse;
 import ru.luttsev.studio.core.model.value.ObjectValue;
 import ru.luttsev.studio.core.model.value.StringValue;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
@@ -30,6 +30,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class OpenApi31DecoderTest {
 
@@ -37,28 +38,8 @@ class OpenApi31DecoderTest {
 
     @Test
     void decodesRootInfoContactAndLicense() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
-                info:
-                  title: Example API
-                  summary: Short description
-                  description: Full description
-                  termsOfService: https://example.com/terms
-                  version: 1.4.0
-                  contact:
-                    name: API Team
-                    url: https://example.com/contact
-                    email: api@example.com
-                    x-contact-id: team-1
-                  license:
-                    name: Apache 2.0
-                    identifier: Apache-2.0
-                    x-license-scope: public
-                  x-info-id: example
-                paths: {}
-                x-root-id: root-value
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/root-info-contact-license.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));

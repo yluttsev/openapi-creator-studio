@@ -1,0 +1,33 @@
+openapi: 3.1.2
+info:
+  title: Events API
+  version: 1.0.0
+servers:
+  - url: https://{environment}.example.com
+    description: Main server
+    variables:
+      environment:
+        default: api
+        enum: [api, staging]
+    x-server-owner: platform
+paths: {}
+security:
+  - OAuth2: [events:read]
+    ApiKey: []
+  - {}
+tags:
+  - name: events
+    description: Event operations
+    externalDocs:
+      description: Event guide
+      url: https://example.com/docs/events
+      x-doc-id: events
+    summary: OpenAPI 3.2 summary
+    parent: platform
+    kind: nav
+    x-tag-owner: events-team
+externalDocs:
+  description: API documentation
+  url: https://example.com/docs
+  x-doc-version: current
+x-root-owner: platform

@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import ru.luttsev.studio.core.model.callback.Callback;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
-import ru.luttsev.studio.core.model.callback.Callback;
 import ru.luttsev.studio.core.model.path.HttpMethod;
 import ru.luttsev.studio.core.model.path.Operation;
 import ru.luttsev.studio.core.model.path.PathItem;
@@ -27,6 +27,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class CallbacksWebhooksDecoderTest {
 
@@ -34,56 +35,8 @@ class CallbacksWebhooksDecoderTest {
 
     @Test
     void decodesOperationCallbacksRootWebhooksAndComponentPathItems() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Events API
-                  version: 1.0.0
-                paths:
-                  /orders:
-                    post:
-                      operationId: createOrder
-                      responses:
-                        "202":
-                          description: Accepted
-                      callbacks:
-                        orderStatus:
-                          '{$request.body#/callbackUrl}':
-                            post:
-                              operationId: reportOrderStatus
-                              responses:
-                                "204":
-                                  description: Status received
-                          x-callback-owner: orders-team
-                        shared:
-                          $ref: "#/components/callbacks/Shared"
-                webhooks:
-                  orderCreated:
-                    post:
-                      operationId: orderCreated
-                      responses:
-                        "204":
-                          description: Event received
-                  referencedWebhook:
-                    $ref: "#/components/pathItems/SharedWebhook"
-                components:
-                  callbacks:
-                    Shared:
-                      '{$request.query.callbackUrl}':
-                        post:
-                          responses:
-                            "200":
-                              description: Callback accepted
-                    SharedAlias:
-                      $ref: "#/components/callbacks/Shared"
-                  pathItems:
-                    SharedWebhook:
-                      summary: Shared webhook
-                      post:
-                        responses:
-                          "202":
-                            description: Accepted
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/callbacks-webhooks-path-items.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));
@@ -150,29 +103,8 @@ class CallbacksWebhooksDecoderTest {
 
     @Test
     void reportsCallbackAndWebhookMappingErrorsAtExactPaths() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Broken Events API
-                  version: 1.0.0
-                paths:
-                  /orders:
-                    post:
-                      responses: {}
-                      callbacks:
-                        invalidReferenceOr: 42
-                        invalidExpression:
-                          not-an-expression: invalid
-                webhooks:
-                  broken: invalid
-                components:
-                  callbacks:
-                    Broken: 42
-                    BrokenExpression:
-                      not-an-expression: invalid
-                  pathItems:
-                    Broken: invalid
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/invalid/callbacks-webhooks-errors.yaml"));
 
         AdapterFailure<?> failure = assertInstanceOf(
                 AdapterFailure.class,

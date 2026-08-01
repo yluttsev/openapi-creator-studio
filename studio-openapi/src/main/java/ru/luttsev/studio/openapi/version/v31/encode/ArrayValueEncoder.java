@@ -6,6 +6,7 @@ import java.util.function.BiFunction;
 import ru.luttsev.studio.core.model.value.ArrayValue;
 import ru.luttsev.studio.core.model.value.DocumentValue;
 import ru.luttsev.studio.core.model.value.StringValue;
+import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 
 final class ArrayValueEncoder {
 
@@ -32,9 +33,15 @@ final class ArrayValueEncoder {
         }
 
         for (int index = 0; index < source.size(); index++) {
-            values.add(encoder.apply(
-                    source.get(index),
-                    context.child(Integer.toString(index))));
+            EncodeContext itemContext = context.child(Integer.toString(index));
+            T value = source.get(index);
+            if (value == null) {
+                itemContext.mappingError(
+                        OpenApiDiagnosticCodes.MAPPING_INVALID_VALUE,
+                        "Collection element must not be null");
+                continue;
+            }
+            values.add(encoder.apply(value, itemContext));
         }
         return new ArrayValue(values);
     }

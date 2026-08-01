@@ -1,6 +1,5 @@
 package ru.luttsev.studio.openapi.version.v31.encode;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,22 +82,16 @@ final class PayloadEncoder {
     ArrayValue encodeParameterList(
             List<ReferenceOr<Parameter>> source,
             EncodeContext context) {
-        ArrayList<DocumentValue> values = new ArrayList<>();
-        if (source == null) {
-            return new ArrayValue(values);
-        }
-
-        for (int index = 0; index < source.size(); index++) {
-            values.add(referenceOrEncoder.encode(
-                    source.get(index),
-                    context.child(Integer.toString(index)),
-                    (parameter, childContext) ->
-                            parameterEncoder.encode(
-                                    parameter,
-                                    childContext,
-                                    this)));
-        }
-        return new ArrayValue(values);
+        return ArrayValueEncoder.encodeObjects(
+                source,
+                context,
+                (parameter, itemContext) -> referenceOrEncoder.encode(
+                        parameter,
+                        itemContext,
+                        (value, childContext) -> parameterEncoder.encode(
+                                value,
+                                childContext,
+                                this)));
     }
 
     ObjectValue encodeRequestBodies(
@@ -198,19 +191,12 @@ final class PayloadEncoder {
     ObjectValue encodeEncodings(
             Map<String, Encoding> source,
             EncodeContext context) {
-        LinkedHashMap<String, DocumentValue> values = new LinkedHashMap<>();
-        if (source == null) {
-            return new ObjectValue(values);
-        }
-
-        for (Map.Entry<String, Encoding> entry : source.entrySet()) {
-            values.put(
-                    entry.getKey(),
-                    encodingEncoder.encode(
-                            entry.getValue(),
-                            context.child(entry.getKey()),
-                            this));
-        }
-        return new ObjectValue(values);
+        return ObjectValueEncoder.encodeObjects(
+                source,
+                context,
+                (encoding, itemContext) -> encodingEncoder.encode(
+                        encoding,
+                        itemContext,
+                        this));
     }
 }

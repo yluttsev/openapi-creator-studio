@@ -1,0 +1,20 @@
+openapi: 3.1.2
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+info:
+  title: Example API
+  summary: Short description
+  description: Full description
+  termsOfService: https://example.com/terms
+  version: 1.4.0
+  contact:
+    name: API Team
+    url: https://example.com/contact
+    email: api@example.com
+    x-contact-id: team-1
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+    x-license-scope: public
+  x-info-id: example
+paths: {}
+x-root-id: root-value

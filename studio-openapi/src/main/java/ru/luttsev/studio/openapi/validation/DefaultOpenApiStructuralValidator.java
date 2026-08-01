@@ -8,7 +8,10 @@ import com.networknt.schema.SchemaRegistryConfig;
 import com.networknt.schema.SpecificationVersion;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +40,7 @@ public final class DefaultOpenApiStructuralValidator
 
     private final OpenApiStructuralSchemaRegistry schemaRegistry;
     private final JacksonDocumentValueMapper valueMapper;
-    private final ConcurrentMap<String, Schema> compiledSchemas;
+    private final ConcurrentMap<StructuralSchemaBundle, Schema> compiledSchemas;
 
     public DefaultOpenApiStructuralValidator() {
         this(new OpenApiStructuralSchemaRegistry(
@@ -67,8 +70,8 @@ public final class DefaultOpenApiStructuralValidator
 
         StructuralSchemaBundle schemaBundle = schema.orElseThrow();
         Schema compiledSchema = compiledSchemas.computeIfAbsent(
-                schemaBundle.rootSchemaId(),
-                ignored -> compile(schemaBundle));
+                schemaBundle,
+                DefaultOpenApiStructuralValidator::compile);
         JsonNode documentNode = valueMapper.toJsonNode(document);
         List<Error> errors = compiledSchema.validate(
                 documentNode,
@@ -83,9 +86,15 @@ public final class DefaultOpenApiStructuralValidator
         for (Error error : errors) {
             diagnostics.add(toDiagnostic(error));
         }
+        Map<DocumentPath, String> pointers = new HashMap<>();
+        for (OpenApiDiagnostic diagnostic : diagnostics) {
+            pointers.computeIfAbsent(
+                    diagnostic.path(),
+                    DocumentPath::toPointer);
+        }
         diagnostics.sort(Comparator
                 .comparing((OpenApiDiagnostic diagnostic) ->
-                        diagnostic.path().toPointer())
+                        pointers.get(diagnostic.path()))
                 .thenComparing(OpenApiDiagnostic::message));
         return new StructuralValidationFailure(diagnostics);
     }
@@ -97,6 +106,7 @@ public final class DefaultOpenApiStructuralValidator
                         .schemas(schemaBundle.resources())
                         .schemaRegistryConfig(SchemaRegistryConfig.builder()
                                 .formatAssertionsEnabled(true)
+                                .locale(Locale.ROOT)
                                 .build()));
         return registry.getSchema(
                 SchemaLocation.of(schemaBundle.rootSchemaId()));

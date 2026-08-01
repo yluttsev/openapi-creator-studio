@@ -1,7 +1,6 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -206,39 +205,13 @@ final class SchemaDecoder {
     private Map<String, Schema> decodeSchemaMap(
             ObjectValue source,
             DecodeContext context) {
-        LinkedHashMap<String, Schema> schemas = new LinkedHashMap<>();
-        if (source == null) {
-            return schemas;
-        }
-
-        for (Map.Entry<String, DocumentValue> entry : source.values().entrySet()) {
-            Schema schema = decode(
-                    entry.getValue(),
-                    context.child(entry.getKey()));
-            if (schema != null) {
-                schemas.put(entry.getKey(), schema);
-            }
-        }
-        return schemas;
+        return ObjectValueMapper.mapValues(source, context, this::decode);
     }
 
     private List<Schema> decodeSchemaList(
             ArrayValue source,
             DecodeContext context) {
-        ArrayList<Schema> schemas = new ArrayList<>();
-        if (source == null) {
-            return schemas;
-        }
-
-        for (int index = 0; index < source.values().size(); index++) {
-            Schema schema = decode(
-                    source.values().get(index),
-                    context.child(Integer.toString(index)));
-            if (schema != null) {
-                schemas.add(schema);
-            }
-        }
-        return schemas;
+        return ArrayValueMapper.mapValues(source, context, this::decode);
     }
 
     private Schema decodeOptionalSchema(

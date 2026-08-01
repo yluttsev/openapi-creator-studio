@@ -1,0 +1,74 @@
+openapi: 3.1.2
+info:
+  title: Users API
+  version: 1.0.0
+paths: {}
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      description: API key
+      name: X-API-Key
+      in: header
+      x-security-id: api-key
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    OAuth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/authorize
+          refreshUrl: https://example.com/refresh
+          scopes:
+            users:read: Read users
+          x-flow-id: implicit
+        password:
+          tokenUrl: https://example.com/token
+          scopes: {}
+        clientCredentials:
+          tokenUrl: https://example.com/token
+          scopes:
+            users:write: Write users
+        authorizationCode:
+          authorizationUrl: https://example.com/authorize
+          tokenUrl: https://example.com/token
+          scopes:
+            users:read: Read users
+    OpenId:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+    MutualTls:
+      type: mutualTLS
+    SharedOAuth:
+      $ref: "#/components/securitySchemes/OAuth"
+  links:
+    UserById:
+      operationId: getUser
+      parameters:
+        userId: "$response.body#/id"
+      requestBody:
+        id: "$response.body#/id"
+      description: Follow the returned user
+      server:
+        url: https://{region}.example.com
+        description: Regional API
+        variables:
+          region:
+            enum: [eu, us]
+            default: eu
+            description: API region
+            x-variable-id: region
+        x-server-id: regional
+      x-link-id: user
+    UserByOperationRef:
+      operationRef: "#/paths/~1users~1{id}/get"
+    SharedUserLink:
+      $ref: "#/components/links/UserById"
+  responses:
+    UserResponse:
+      description: User
+      links:
+        self:
+          $ref: "#/components/links/UserById"

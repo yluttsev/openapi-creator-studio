@@ -1,0 +1,34 @@
+openapi: 3.1.2
+info:
+  title: Broken API
+  version: 1.0.0
+paths: {}
+components:
+  securitySchemes:
+    Unknown:
+      type: unsupported
+    MissingApiKeyFields:
+      type: apiKey
+    BrokenOAuth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/authorize
+          scopes:
+            users:read: 42
+  links:
+    MissingTarget:
+      description: No operation
+    BothTargets:
+      operationId: getUser
+      operationRef: "#/paths/~1users/get"
+    BrokenParameters:
+      operationId: getUser
+      parameters:
+        userId: 42
+    BrokenServer:
+      operationId: getUser
+      server:
+        variables:
+          region:
+            enum: [eu, 42]

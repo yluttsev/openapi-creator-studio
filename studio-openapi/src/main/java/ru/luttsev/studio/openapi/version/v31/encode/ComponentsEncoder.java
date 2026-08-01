@@ -120,15 +120,10 @@ final class ComponentsEncoder {
     private ObjectValue encodeSchemas(
             Map<String, Schema> source,
             EncodeContext context) {
-        ObjectValueBuilder target = new ObjectValueBuilder();
-        for (Map.Entry<String, Schema> entry : source.entrySet()) {
-            target.put(
-                    entry.getKey(),
-                    schemaEncoder.encode(
-                            entry.getValue(),
-                            context.child(entry.getKey())));
-        }
-        return target.build();
+        return ObjectValueEncoder.encodeObjects(
+                source,
+                context,
+                schemaEncoder::encode);
     }
 
     private static boolean notEmpty(Map<?, ?> value) {

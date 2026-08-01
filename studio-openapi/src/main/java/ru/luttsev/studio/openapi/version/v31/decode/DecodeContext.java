@@ -1,5 +1,6 @@
 package ru.luttsev.studio.openapi.version.v31.decode;
 
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Objects;
 import ru.luttsev.studio.core.model.OpenApiVersion;
@@ -12,15 +13,18 @@ import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnostic;
 final class DecodeContext {
 
     private final OpenApiVersion version;
-    private final DocumentPath path;
+    private final DecodeContext parent;
+    private final String segment;
     private final DiagnosticCollector diagnosticCollector;
 
     private DecodeContext(
             OpenApiVersion version,
-            DocumentPath path,
+            DecodeContext parent,
+            String segment,
             DiagnosticCollector diagnosticCollector) {
         this.version = version;
-        this.path = path;
+        this.parent = parent;
+        this.segment = segment;
         this.diagnosticCollector = diagnosticCollector;
     }
 
@@ -28,7 +32,8 @@ final class DecodeContext {
         Objects.requireNonNull(version, "version must not be null");
         return new DecodeContext(
                 version,
-                DocumentPath.root(),
+                null,
+                null,
                 new DiagnosticCollector());
     }
 
@@ -36,7 +41,8 @@ final class DecodeContext {
         Objects.requireNonNull(segment, "segment must not be null");
         return new DecodeContext(
                 version,
-                path.child(segment),
+                this,
+                segment,
                 diagnosticCollector);
     }
 
@@ -45,7 +51,21 @@ final class DecodeContext {
     }
 
     DocumentPath path() {
-        return path;
+        ArrayDeque<String> segments = new ArrayDeque<>();
+        DecodeContext current = this;
+        while (current.parent != null) {
+            segments.addFirst(current.segment);
+            current = current.parent;
+        }
+
+        StringBuilder pointer = new StringBuilder();
+        for (String pathSegment : segments) {
+            pointer.append('/')
+                    .append(pathSegment
+                            .replace("~", "~0")
+                            .replace("/", "~1"));
+        }
+        return DocumentPath.parse(pointer.toString());
     }
 
     void error(DiagnosticCode code, String message) {
@@ -73,6 +93,6 @@ final class DecodeContext {
                 severity,
                 DiagnosticPhase.MAPPING,
                 message,
-                path));
+                path()));
     }
 }

@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.core.model.Components;
+import ru.luttsev.studio.core.model.media.MediaType;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
-import ru.luttsev.studio.core.model.media.MediaType;
 import ru.luttsev.studio.core.model.reference.InlineObject;
 import ru.luttsev.studio.core.model.schema.UriReference;
 import ru.luttsev.studio.core.model.security.OAuthFlow;
@@ -27,6 +27,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 import ru.luttsev.studio.openapi.version.v31.decode.OpenApi31Decoder;
 
 class ComponentsEncoderTest {
@@ -35,104 +36,8 @@ class ComponentsEncoderTest {
 
     @Test
     void roundTripsEveryOpenApi31ComponentSection() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Components API
-                  version: 1.0.0
-                paths: {}
-                components:
-                  schemas:
-                    User:
-                      type: object
-                      properties:
-                        id: { type: string }
-                  responses:
-                    UserResponse:
-                      description: User response
-                      content:
-                        application/json:
-                          schema:
-                            $ref: "#/components/schemas/User"
-                  parameters:
-                    Limit:
-                      name: limit
-                      in: query
-                      schema: { type: integer }
-                  examples:
-                    UserExample:
-                      summary: User
-                      value: { id: user-1 }
-                  requestBodies:
-                    CreateUser:
-                      required: true
-                      content:
-                        application/json:
-                          schema:
-                            $ref: "#/components/schemas/User"
-                  headers:
-                    RequestId:
-                      description: Request identifier
-                      schema: { type: string }
-                  securitySchemes:
-                    ApiKey:
-                      type: apiKey
-                      description: API key
-                      name: X-API-Key
-                      in: header
-                    Bearer:
-                      type: http
-                      scheme: bearer
-                      bearerFormat: JWT
-                    MutualTls:
-                      type: mutualTLS
-                    OAuth:
-                      type: oauth2
-                      flows:
-                        implicit:
-                          authorizationUrl: https://example.com/authorize
-                          refreshUrl: https://example.com/refresh
-                          scopes:
-                            users:read: Read users
-                          x-flow-id: implicit
-                        password:
-                          tokenUrl: https://example.com/token
-                          scopes: {}
-                        clientCredentials:
-                          tokenUrl: https://example.com/token
-                          scopes:
-                            users:write: Write users
-                        authorizationCode:
-                          authorizationUrl: https://example.com/authorize
-                          tokenUrl: https://example.com/token
-                          scopes: {}
-                    OpenId:
-                      type: openIdConnect
-                      openIdConnectUrl: https://example.com/.well-known/openid-configuration
-                    SharedOAuth:
-                      $ref: "#/components/securitySchemes/OAuth"
-                  links:
-                    UserById:
-                      operationId: getUser
-                      parameters:
-                        userId: "$response.body#/id"
-                  callbacks:
-                    UserCallback:
-                      '{$request.body#/callbackUrl}':
-                        post:
-                          responses:
-                            "200": { description: OK }
-                    SharedCallback:
-                      $ref: "#/components/callbacks/UserCallback"
-                  pathItems:
-                    UserPath:
-                      summary: User operations
-                      get:
-                        responses:
-                          "200":
-                            $ref: "#/components/responses/UserResponse"
-                  x-components-id: shared
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/encode/components-all-sections-round-trip.yaml"));
         OpenApiDocument document = decode(source);
         EncodeContext context = EncodeContext.root(OpenApiVersion.V3_1_2)
                 .child("components");

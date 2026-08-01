@@ -9,14 +9,14 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.core.model.Components;
-import ru.luttsev.studio.core.model.OpenApiDocument;
-import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.link.Link;
 import ru.luttsev.studio.core.model.media.Encoding;
 import ru.luttsev.studio.core.model.media.Example;
 import ru.luttsev.studio.core.model.media.MediaType;
 import ru.luttsev.studio.core.model.media.MediaTypeName;
 import ru.luttsev.studio.core.model.media.RequestBody;
+import ru.luttsev.studio.core.model.OpenApiDocument;
+import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.parameter.Parameter;
 import ru.luttsev.studio.core.model.parameter.ParameterLocation;
 import ru.luttsev.studio.core.model.path.HttpMethod;
@@ -37,6 +37,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 import ru.luttsev.studio.openapi.version.v31.decode.OpenApi31Decoder;
 
 class PayloadEncoderTest {
@@ -46,125 +47,8 @@ class PayloadEncoderTest {
 
     @Test
     void roundTripsInlineAndReferencedPayloadGraph() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Users API
-                  version: 1.0.0
-                paths:
-                  /users:
-                    get:
-                      responses:
-                        "200":
-                          description: Users
-                        x-responses-id: list-users
-                components:
-                  examples:
-                    UserExample:
-                      summary: User
-                      description: Example user
-                      value:
-                        id: user-1
-                      x-example-id: primary
-                    SharedExample:
-                      $ref: "#/components/examples/UserExample"
-                      summary: Shared user
-                      x-reference-id: shared
-                  parameters:
-                    Limit:
-                      name: limit
-                      in: query
-                      description: Result limit
-                      required: false
-                      deprecated: true
-                      allowEmptyValue: false
-                      style: spaceDelimited
-                      explode: true
-                      allowReserved: true
-                      schema:
-                        type: integer
-                        minimum: 1
-                      example: 10
-                      examples:
-                        Alternative:
-                          $ref: "#/components/examples/UserExample"
-                      x-parameter-id: limit
-                    SharedLimit:
-                      $ref: "#/components/parameters/Limit"
-                  headers:
-                    RequestId:
-                      description: Request identifier
-                      required: true
-                      deprecated: false
-                      style: simple
-                      explode: false
-                      schema:
-                        type: string
-                      example: trace-1
-                  requestBodies:
-                    CreateUser:
-                      description: User payload
-                      required: true
-                      content:
-                        application/json:
-                          schema:
-                            type: object
-                          example:
-                            id: user-1
-                          examples:
-                            Created:
-                              $ref: "#/components/examples/UserExample"
-                          encoding:
-                            profile:
-                              contentType: application/json
-                              style: form
-                              explode: true
-                              allowReserved: false
-                              headers:
-                                X-Trace:
-                                  $ref: "#/components/headers/RequestId"
-                              x-encoding-id: profile
-                          x-media-id: json
-                    SharedBody:
-                      $ref: "#/components/requestBodies/CreateUser"
-                  responses:
-                    UserResponse:
-                      description: User response
-                      headers:
-                        X-Request-Id:
-                          $ref: "#/components/headers/RequestId"
-                      content:
-                        application/json:
-                          schema:
-                            type: object
-                      links:
-                        self:
-                          $ref: "#/components/links/UserById"
-                      x-response-id: user
-                    SharedResponse:
-                      $ref: "#/components/responses/UserResponse"
-                  links:
-                    UserById:
-                      operationId: getUser
-                      parameters:
-                        userId: "$response.body#/id"
-                      requestBody:
-                        id: "$response.body#/id"
-                      description: Follow the returned user
-                      server:
-                        url: "https://{region}.example.com"
-                        description: Regional API
-                        variables:
-                          region:
-                            enum: [eu, us]
-                            default: eu
-                            description: API region
-                            x-variable-id: region
-                        x-server-id: regional
-                      x-link-id: user
-                    SharedUserLink:
-                      $ref: "#/components/links/UserById"
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/encode/payload-graph-round-trip.yaml"));
         OpenApiDocument document = decode(source);
         Components components = document.getComponents();
         ObjectValue sourceComponents = object(source.values().get("components"));

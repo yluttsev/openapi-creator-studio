@@ -28,39 +28,13 @@ import ru.luttsev.studio.openapi.result.ExportSuccess;
 import ru.luttsev.studio.openapi.result.ImportFailure;
 import ru.luttsev.studio.openapi.result.ImportResult;
 import ru.luttsev.studio.openapi.result.ImportSuccess;
+import ru.luttsev.studio.openapi.testing.TestResources;
 import ru.luttsev.studio.openapi.version.v31.encode.OpenApi31Encoder;
 
 class OpenApiImportExportIntegrationTest {
 
-    private static final String VALID_YAML = """
-            openapi: 3.1.2
-            info:
-              title: Users API
-              version: 1.0.0
-            paths:
-              /users:
-                get:
-                  operationId: listUsers
-                  tags: [users]
-                  responses:
-                    "200":
-                      description: Users
-                      content:
-                        application/json:
-                          schema:
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/User"
-            components:
-              schemas:
-                User:
-                  type: object
-                  properties:
-                    id: { type: string }
-            tags:
-              - name: users
-                description: User operations
-            """;
+    private static final String VALID_YAML = TestResources.readFixture(
+            "orchestration/valid-round-trip.yaml");
 
     private final DefaultOpenApiImporter importer =
             new DefaultOpenApiImporter();

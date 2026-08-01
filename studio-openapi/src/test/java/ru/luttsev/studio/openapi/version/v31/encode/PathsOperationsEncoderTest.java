@@ -21,86 +21,15 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 import ru.luttsev.studio.openapi.version.v31.decode.OpenApi31Decoder;
 
 class PathsOperationsEncoderTest {
 
     @Test
     void roundTripsPathsOperationsAndCallbacks() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Users API
-                  version: 1.0.0
-                paths:
-                  x-paths-owner: platform
-                  /users/{id}:
-                    summary: User resource
-                    description: Operations on a user
-                    parameters:
-                      - $ref: "#/components/parameters/UserId"
-                    servers:
-                      - url: https://{environment}.example.com
-                        description: Path server
-                        variables:
-                          environment:
-                            default: api
-                            enum: [api, staging]
-                        x-server-level: path
-                    get:
-                      tags: [users, read]
-                      summary: Get user
-                      description: Finds one user
-                      externalDocs:
-                        description: User guide
-                        url: https://example.com/docs/users
-                        x-doc-id: users
-                      operationId: getUser
-                      parameters:
-                        - name: include
-                          in: query
-                          schema:
-                            type: string
-                      requestBody:
-                        $ref: "#/components/requestBodies/SearchOptions"
-                      responses:
-                        "200":
-                          description: User found
-                          content:
-                            application/json:
-                              schema:
-                                $ref: "#/components/schemas/User"
-                        2XX:
-                          $ref: "#/components/responses/Success"
-                        default:
-                          $ref: "#/components/responses/Error"
-                        x-display-group: Users
-                      callbacks:
-                        userChanged:
-                          '{$request.body#/callbackUrl}':
-                            post:
-                              operationId: receiveUser
-                              responses:
-                                "204":
-                                  description: Callback accepted
-                            x-callback-path: user-change
-                          x-callback-id: local
-                        shared:
-                          $ref: "#/components/callbacks/Shared"
-                          summary: Shared callback
-                      deprecated: false
-                      security:
-                        - OAuth2: [users:read]
-                          ApiKey: []
-                        - {}
-                      servers:
-                        - url: https://api.example.com
-                      x-operation-owner: users-team
-                    x-path-item-id: users-by-id
-                  /shared:
-                    $ref: "#/components/pathItems/Shared"
-                    summary: Shared operations
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/encode/paths-operations-callbacks-round-trip.yaml"));
         OpenApiDocument document = decode(source);
         EncodeContext context = EncodeContext.root(OpenApiVersion.V3_1_2)
                 .child("paths");

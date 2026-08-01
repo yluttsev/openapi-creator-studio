@@ -39,7 +39,7 @@ final class ArrayValueMapper {
         });
     }
 
-    private static <T> List<T> mapValues(
+    static <T> List<T> mapValues(
             ArrayValue source,
             DecodeContext context,
             BiFunction<DocumentValue, DecodeContext, T> mapper) {

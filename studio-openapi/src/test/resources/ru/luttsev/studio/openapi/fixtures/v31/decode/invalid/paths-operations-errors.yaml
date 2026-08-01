@@ -1,0 +1,19 @@
+openapi: 3.1.2
+info:
+  title: Broken API
+  version: 1.0.0
+paths:
+  /broken: invalid
+  /users:
+    get:
+      tags: [users, 42]
+      parameters: [invalid]
+      requestBody: 42
+      responses:
+        "200": invalid
+      security:
+        - OAuth2: invalid
+      servers: [invalid]
+  /missing-responses:
+    post:
+      summary: Missing responses

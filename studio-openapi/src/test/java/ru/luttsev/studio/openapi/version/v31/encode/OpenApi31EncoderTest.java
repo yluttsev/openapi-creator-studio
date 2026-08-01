@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import ru.luttsev.studio.core.model.info.Info;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
-import ru.luttsev.studio.core.model.info.Info;
 import ru.luttsev.studio.core.model.schema.UriReference;
 import ru.luttsev.studio.core.model.tag.Tag;
 import ru.luttsev.studio.core.model.value.ObjectValue;
@@ -24,6 +24,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 import ru.luttsev.studio.openapi.version.v31.decode.OpenApi31Decoder;
 
 class OpenApi31EncoderTest {
@@ -32,79 +33,8 @@ class OpenApi31EncoderTest {
 
     @Test
     void roundTripsCompleteOpenApi31Document() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Events API
-                  summary: Event management
-                  description: Manages events
-                  termsOfService: https://example.com/terms
-                  contact:
-                    name: API Support
-                    url: https://example.com/support
-                    email: support@example.com
-                    x-contact-id: support
-                  license:
-                    name: Apache 2.0
-                    identifier: Apache-2.0
-                    x-license-id: apache
-                  version: 1.0.0
-                  x-info-id: events
-                jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
-                servers:
-                  - url: https://{environment}.example.com
-                    description: Main server
-                    variables:
-                      environment:
-                        default: api
-                        enum: [api, staging]
-                paths:
-                  /events:
-                    get:
-                      tags: [events]
-                      operationId: listEvents
-                      responses:
-                        "200":
-                          $ref: "#/components/responses/EventList"
-                webhooks:
-                  eventCreated:
-                    post:
-                      responses:
-                        "200": { description: Accepted }
-                components:
-                  schemas:
-                    Event:
-                      type: object
-                      properties:
-                        id: { type: string }
-                  responses:
-                    EventList:
-                      description: Event list
-                      content:
-                        application/json:
-                          schema:
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/Event"
-                  securitySchemes:
-                    ApiKey:
-                      type: apiKey
-                      name: X-API-Key
-                      in: header
-                security:
-                  - ApiKey: []
-                tags:
-                  - name: events
-                    description: Event operations
-                    externalDocs:
-                      description: Event guide
-                      url: https://example.com/docs/events
-                externalDocs:
-                  description: API documentation
-                  url: https://example.com/docs
-                  x-doc-version: current
-                x-root-owner: platform
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/encode/complete-document-round-trip.yaml"));
         OpenApiDocument document = decode(source);
 
         AdapterSuccess<?> success = assertInstanceOf(

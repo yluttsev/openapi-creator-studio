@@ -22,7 +22,8 @@ class EncodeContextTest {
         EncodeContext context = EncodeContext.root(OpenApiVersion.V3_1_2);
 
         context.child("paths")
-                .child("/users")
+                .child("/~")
+                .child("")
                 .warning(TEST_CODE, "warning");
 
         assertFalse(context.hasErrors());
@@ -40,8 +41,22 @@ class EncodeContextTest {
         assertEquals(
                 DiagnosticPhase.VERSION_COMPATIBILITY,
                 diagnostics.get(0).phase());
-        assertEquals("/paths/~1users", diagnostics.get(0).path().toPointer());
+        assertEquals("/paths/~1~0/", diagnostics.get(0).path().toPointer());
         assertEquals(DiagnosticSeverity.ERROR, diagnostics.get(1).severity());
         assertEquals("/info/title", diagnostics.get(1).path().toPointer());
+    }
+
+    @Test
+    void materializesDeepPathsIteratively() {
+        EncodeContext context = EncodeContext.root(OpenApiVersion.V3_1_2);
+        for (int index = 0; index < 2_000; index++) {
+            context = context.child(Integer.toString(index));
+        }
+
+        context.mappingError(TEST_CODE, "deep error");
+
+        OpenApiDiagnostic diagnostic = context.diagnostics().getFirst();
+        assertEquals(DiagnosticPhase.MAPPING, diagnostic.phase());
+        assertEquals(2_000, diagnostic.path().segments().size());
     }
 }

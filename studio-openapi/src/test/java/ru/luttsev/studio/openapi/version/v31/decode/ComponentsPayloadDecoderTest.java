@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.core.model.Components;
-import ru.luttsev.studio.core.model.OpenApiDocument;
-import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.media.Encoding;
 import ru.luttsev.studio.core.model.media.Example;
 import ru.luttsev.studio.core.model.media.MediaType;
 import ru.luttsev.studio.core.model.media.MediaTypeName;
 import ru.luttsev.studio.core.model.media.RequestBody;
+import ru.luttsev.studio.core.model.OpenApiDocument;
+import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.core.model.parameter.Header;
 import ru.luttsev.studio.core.model.parameter.Parameter;
 import ru.luttsev.studio.core.model.parameter.ParameterLocation;
@@ -40,6 +40,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class ComponentsPayloadDecoderTest {
 
@@ -47,111 +48,8 @@ class ComponentsPayloadDecoderTest {
 
     @Test
     void decodesInlineAndReferencedPayloadComponents() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Users API
-                  version: 1.0.0
-                paths: {}
-                components:
-                  schemas:
-                    User:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                  examples:
-                    UserExample:
-                      summary: User
-                      description: Example user
-                      value:
-                        id: user-1
-                      x-example-id: primary
-                    SharedExample:
-                      $ref: "#/components/examples/UserExample"
-                      summary: Shared user
-                      x-reference-id: shared
-                  parameters:
-                    Limit:
-                      name: limit
-                      in: query
-                      description: Result limit
-                      required: false
-                      deprecated: true
-                      allowEmptyValue: false
-                      style: spaceDelimited
-                      explode: true
-                      allowReserved: true
-                      schema:
-                        type: integer
-                        minimum: 1
-                      example: 10
-                      examples:
-                        Alternative:
-                          $ref: "#/components/examples/UserExample"
-                      x-parameter-id: limit
-                    SharedLimit:
-                      $ref: "#/components/parameters/Limit"
-                  headers:
-                    RequestId:
-                      description: Request identifier
-                      required: true
-                      deprecated: false
-                      style: simple
-                      explode: false
-                      schema:
-                        type: string
-                      example: trace-1
-                  requestBodies:
-                    CreateUser:
-                      description: User payload
-                      required: true
-                      content:
-                        application/json:
-                          schema:
-                            $ref: "#/components/schemas/User"
-                          example:
-                            id: user-1
-                          examples:
-                            Created:
-                              $ref: "#/components/examples/UserExample"
-                          encoding:
-                            profile:
-                              contentType: application/json
-                              style: form
-                              explode: true
-                              allowReserved: false
-                              headers:
-                                X-Trace:
-                                  $ref: "#/components/headers/RequestId"
-                              x-encoding-id: profile
-                          x-media-id: json
-                    SharedBody:
-                      $ref: "#/components/requestBodies/CreateUser"
-                  responses:
-                    UserResponse:
-                      description: User response
-                      headers:
-                        X-Request-Id:
-                          $ref: "#/components/headers/RequestId"
-                      content:
-                        application/json:
-                          schema:
-                            $ref: "#/components/schemas/User"
-                          example:
-                            id: user-1
-                      links:
-                        self:
-                          operationId: getUser
-                      x-response-id: user
-                    SharedResponse:
-                      $ref: "#/components/responses/UserResponse"
-                  securitySchemes:
-                    ApiKey:
-                      type: apiKey
-                      in: header
-                      name: X-API-Key
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/components-payload.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));
@@ -302,28 +200,8 @@ class ComponentsPayloadDecoderTest {
 
     @Test
     void reportsPayloadMappingErrorsAtExactPaths() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Broken API
-                  version: 1.0.0
-                paths: {}
-                components:
-                  parameters:
-                    InvalidShape: string
-                  examples:
-                    InvalidReference:
-                      $ref: 42
-                  headers:
-                    InvalidStyle:
-                      style: unsupported
-                      schema: true
-                  requestBodies:
-                    MissingContent:
-                      description: Missing content
-                  responses:
-                    MissingDescription: {}
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/invalid/components-payload-errors.yaml"));
 
         AdapterFailure<?> failure = assertInstanceOf(
                 AdapterFailure.class,

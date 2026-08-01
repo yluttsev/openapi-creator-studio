@@ -1,0 +1,103 @@
+openapi: 3.1.2
+info:
+  title: Users API
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+  examples:
+    UserExample:
+      summary: User
+      description: Example user
+      value:
+        id: user-1
+      x-example-id: primary
+    SharedExample:
+      $ref: "#/components/examples/UserExample"
+      summary: Shared user
+      x-reference-id: shared
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Result limit
+      required: false
+      deprecated: true
+      allowEmptyValue: false
+      style: spaceDelimited
+      explode: true
+      allowReserved: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 10
+      examples:
+        Alternative:
+          $ref: "#/components/examples/UserExample"
+      x-parameter-id: limit
+    SharedLimit:
+      $ref: "#/components/parameters/Limit"
+  headers:
+    RequestId:
+      description: Request identifier
+      required: true
+      deprecated: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+      example: trace-1
+  requestBodies:
+    CreateUser:
+      description: User payload
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+          example:
+            id: user-1
+          examples:
+            Created:
+              $ref: "#/components/examples/UserExample"
+          encoding:
+            profile:
+              contentType: application/json
+              style: form
+              explode: true
+              allowReserved: false
+              headers:
+                X-Trace:
+                  $ref: "#/components/headers/RequestId"
+              x-encoding-id: profile
+          x-media-id: json
+    SharedBody:
+      $ref: "#/components/requestBodies/CreateUser"
+  responses:
+    UserResponse:
+      description: User response
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+          example:
+            id: user-1
+      links:
+        self:
+          operationId: getUser
+      x-response-id: user
+    SharedResponse:
+      $ref: "#/components/responses/UserResponse"
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key

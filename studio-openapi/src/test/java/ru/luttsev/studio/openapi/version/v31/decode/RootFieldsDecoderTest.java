@@ -25,6 +25,7 @@ import ru.luttsev.studio.openapi.result.AdapterSuccess;
 import ru.luttsev.studio.openapi.result.SyntaxSuccess;
 import ru.luttsev.studio.openapi.syntax.JacksonOpenApiSyntaxCodec;
 import ru.luttsev.studio.openapi.syntax.ParsedDocument;
+import ru.luttsev.studio.openapi.testing.TestResources;
 
 class RootFieldsDecoderTest {
 
@@ -32,41 +33,8 @@ class RootFieldsDecoderTest {
 
     @Test
     void decodesRemainingOpenApi31RootFields() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Events API
-                  version: 1.0.0
-                servers:
-                  - url: https://{environment}.example.com
-                    description: Main server
-                    variables:
-                      environment:
-                        default: api
-                        enum: [api, staging]
-                    x-server-owner: platform
-                paths: {}
-                security:
-                  - OAuth2: [events:read]
-                    ApiKey: []
-                  - {}
-                tags:
-                  - name: events
-                    description: Event operations
-                    externalDocs:
-                      description: Event guide
-                      url: https://example.com/docs/events
-                      x-doc-id: events
-                    summary: OpenAPI 3.2 summary
-                    parent: platform
-                    kind: nav
-                    x-tag-owner: events-team
-                externalDocs:
-                  description: API documentation
-                  url: https://example.com/docs
-                  x-doc-version: current
-                x-root-owner: platform
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/root-fields.yaml"));
 
         OpenApiDocument document = successValue(
                 decoder.decode(source, OpenApiVersion.V3_1_2));
@@ -131,28 +99,8 @@ class RootFieldsDecoderTest {
 
     @Test
     void reportsRootFieldMappingErrorsAtExactPaths() {
-        ObjectValue source = parse("""
-                openapi: 3.1.2
-                info:
-                  title: Broken API
-                  version: 1.0.0
-                paths: {}
-                servers:
-                  - invalid
-                  - description: Missing URL
-                security:
-                  - invalid
-                  - OAuth2: invalid
-                tags:
-                  - invalid
-                  - description: Missing name
-                  - name: Invalid docs
-                    externalDocs: invalid
-                  - name: Missing docs URL
-                    externalDocs:
-                      description: Missing URL
-                externalDocs: invalid
-                """);
+        ObjectValue source = parse(TestResources.readFixture(
+                "v31/decode/invalid/root-fields-errors.yaml"));
 
         AdapterFailure<?> failure = assertInstanceOf(
                 AdapterFailure.class,
