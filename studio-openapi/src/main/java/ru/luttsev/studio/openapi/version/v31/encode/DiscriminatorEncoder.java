@@ -4,12 +4,11 @@ import java.util.Map;
 import java.util.Set;
 import ru.luttsev.studio.core.model.schema.Discriminator;
 import ru.luttsev.studio.core.model.value.ObjectValue;
-import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 
 final class DiscriminatorEncoder {
 
     private static final Set<String> MAPPED_FIELDS =
-            Set.of("propertyName", "mapping");
+            Set.of("propertyName", "mapping", "defaultMapping");
 
     ObjectValue encode(
             Discriminator source,
@@ -25,10 +24,7 @@ final class DiscriminatorEncoder {
         }
 
         if (source.getDefaultMapping() != null) {
-            context.child("defaultMapping").error(
-                    OpenApiDiagnosticCodes.VERSION_UNSUPPORTED_FIELD,
-                    "Field 'defaultMapping' is not supported by OpenAPI "
-                            + context.targetVersion().value());
+            context.unsupportedField("defaultMapping");
         }
 
         if (source.getExtensions() != null) {

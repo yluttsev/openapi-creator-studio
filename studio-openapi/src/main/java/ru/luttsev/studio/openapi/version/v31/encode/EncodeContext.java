@@ -9,6 +9,7 @@ import ru.luttsev.studio.openapi.diagnostic.DiagnosticCode;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticPhase;
 import ru.luttsev.studio.openapi.diagnostic.DiagnosticSeverity;
 import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnostic;
+import ru.luttsev.studio.openapi.diagnostic.OpenApiDiagnosticCodes;
 
 final class EncodeContext {
 
@@ -57,6 +58,13 @@ final class EncodeContext {
 
     void warning(DiagnosticCode code, String message) {
         add(code, DiagnosticSeverity.WARNING, message);
+    }
+
+    void unsupportedField(String field) {
+        child(field).error(
+                OpenApiDiagnosticCodes.VERSION_UNSUPPORTED_FIELD,
+                "Field '" + field + "' is not supported by OpenAPI "
+                        + targetVersion.value());
     }
 
     boolean hasErrors() {

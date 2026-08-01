@@ -34,6 +34,8 @@ public final class OpenApiDiagnosticCodes {
             new DiagnosticCode("openapi.compatibility.field-conflict");
     public static final DiagnosticCode VERSION_UNSUPPORTED_FIELD =
             new DiagnosticCode("openapi.compatibility.unsupported-field");
+    public static final DiagnosticCode VERSION_UNSUPPORTED_REFERENCE =
+            new DiagnosticCode("openapi.compatibility.unsupported-reference");
     public static final DiagnosticCode SERIALIZATION_FAILED =
             new DiagnosticCode("openapi.serialization.failed");
 
