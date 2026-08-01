@@ -7,8 +7,8 @@ YAML/JSON, определение версии и структурная вал�
 реализованы на 2026-08-01. Decoder OpenAPI 3.1 реализован, включая корневые
 поля, paths, operations, callbacks, webhooks, schemas, payload, security
 schemes и links. Фундамент encoder-а OpenAPI 3.1, рекурсивный encoder Schema
-Object и payload encoder реализованы; encoder-ы paths, operations и корневого
-документа ещё в работе.
+Object, payload encoder и encoder-ы paths/operations реализованы; encoder
+корневого документа ещё в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -238,8 +238,17 @@ Schema Objects делегируются `SchemaEncoder`, а extensions сохр�
 payload-графе. Поля payload из OpenAPI 3.2 при экспорте в OpenAPI 3.1 создают
 точные compatibility diagnostics. Reference Object непосредственно вместо
 Media Type также отклоняется, поскольку Content Object в OpenAPI 3.1 допускает
-только inline Media Type Objects. Encoder-ы paths, operations и корневого
-документа будут добавлены следующими срезами.
+только inline Media Type Objects.
+
+`PathsEncoder`, `PathItemEncoder` и `OperationEncoder` преобразуют paths, все
+восемь полей HTTP-операций OpenAPI 3.1, метаданные операции, parameters,
+request bodies, responses, security requirements, servers и рекурсивно
+вложенные callbacks. Callback expressions повторно используют
+`PathItemEncoder`, поэтому рекурсивный граф остаётся явным и не создаёт
+циклических зависимостей конструкторов. Операция `query` и представление
+`additionalOperations` из OpenAPI 3.2 при экспорте в OpenAPI 3.1 создают
+compatibility errors. Encoder корневого документа будет добавлен следующим
+срезом.
 
 ## План реализации
 
@@ -247,8 +256,8 @@ Media Type также отклоняется, поскольку Content Object 
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
-5. OpenAPI 3.1 encoder. Фундамент, schema- и payload-срезы реализованы; paths,
-   operations и корневой срез в работе.
+5. OpenAPI 3.1 encoder. Фундамент, schema-, payload- и paths/operations-срезы
+   реализованы; корневой срез в работе.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.

@@ -7,8 +7,8 @@ layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-08-01. The OpenAPI 3.1 decoder is implemented,
 including root fields, paths, operations, callbacks, webhooks, schemas,
 payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation,
-recursive Schema Object encoder, and payload encoder are implemented; path,
-operation, and root encoders are still in progress.
+recursive Schema Object encoder, payload encoder, and paths/operations encoder
+are implemented; the root encoder is still in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -235,8 +235,16 @@ It delegates nested Schema Objects to `SchemaEncoder` and preserves extensions
 throughout the payload graph. OpenAPI 3.2-only payload fields produce precise
 compatibility diagnostics when targeting OpenAPI 3.1. A Reference Object used
 directly as a Media Type is also rejected because OpenAPI 3.1 Content Objects
-only allow inline Media Type Objects. Path, operation, and root encoders will
-be added in subsequent slices.
+only allow inline Media Type Objects.
+
+`PathsEncoder`, `PathItemEncoder`, and `OperationEncoder` map paths, all eight
+OpenAPI 3.1 HTTP operation fields, operation metadata, parameters, request
+bodies, responses, security requirements, servers, and recursively nested
+callbacks. Callback expressions reuse `PathItemEncoder`, which keeps the
+recursive graph explicit without cyclic constructor dependencies. The OpenAPI
+3.2 `query` operation and `additionalOperations` representation produce
+compatibility errors when targeting OpenAPI 3.1. The root encoder will be
+added in the next slice.
 
 ## Planned implementation sequence
 
@@ -244,8 +252,8 @@ be added in subsequent slices.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
-5. OpenAPI 3.1 encoder. Foundation, schema, and payload slices implemented;
-   path, operation, and root slices in progress.
+5. OpenAPI 3.1 encoder. Foundation, schema, payload, and paths/operations
+   slices implemented; root slice in progress.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.
