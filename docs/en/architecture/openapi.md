@@ -207,6 +207,10 @@ root fields are mapped. Unknown root fields and extensions remain in
 `parent`, and `kind` are not populated by the 3.1 adapter; if supplied directly
 to the decoder, they are preserved as additional fields.
 
+For operation-level security, the decoder preserves whether the `security`
+field was absent or explicitly set to an empty array. This distinction controls
+whether root security is inherited or disabled for that operation.
+
 ## OpenAPI 3.1 encoder
 
 The encoder converts the normalized core model back into the shared
@@ -244,7 +248,8 @@ callbacks. Callback expressions reuse `PathItemEncoder`, which keeps the
 recursive graph explicit without cyclic constructor dependencies. The OpenAPI
 3.2 `query` operation and `additionalOperations` representation produce
 compatibility errors when targeting OpenAPI 3.1. The root encoder will be
-added in the next slice.
+added in the next slice. Operation security overrides retain an explicitly
+empty array, while inherited security omits the operation-level field.
 
 ## Planned implementation sequence
 

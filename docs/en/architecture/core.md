@@ -2,7 +2,7 @@
 
 Language: **English** · [Русский](../../ru/architecture/core.md)
 
-Status: implemented core architecture as of 2026-07-30.
+Status: implemented core architecture as of 2026-08-01.
 
 The source code is located under
 `studio-core/src/main/java/ru/luttsev/studio/core`.
@@ -73,6 +73,14 @@ An operation's `responses` field is represented by the `Responses` model.
 The model stores response entries by `ResponseKey` and extends
 `ExtensibleObject`, so fields such as `x-*` extensions remain attached to the
 Responses Object instead of being moved to the operation.
+
+Operation-level security preserves field presence because absence and an
+empty array have different meanings in OpenAPI. A new `Operation` inherits
+root security and reports `hasSecurityOverride() == false`. Calling
+`setSecurity`, or mutating the list returned by `getSecurity`, defines an
+override even when the list is empty. `inheritSecurity()` removes the override
+and returns the operation to root inheritance. The list itself remains mutable
+and non-null, consistently with other core collections.
 
 Most models extend `ExtensibleObject`. Its `additionalFields` map stores
 unknown fields and `x-*` extensions as `DocumentValue`.

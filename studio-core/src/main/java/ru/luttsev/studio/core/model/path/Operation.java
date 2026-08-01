@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,6 +34,32 @@ public final class Operation extends ExtensibleObject {
     private Responses responses = new Responses();
     private Map<String, ReferenceOr<Callback>> callbacks = new LinkedHashMap<>();
     private Boolean deprecated;
-    private List<SecurityRequirement> security = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private boolean securityOverride;
+    private final PresenceAwareList<SecurityRequirement> security =
+            new PresenceAwareList<>(this::markSecurityOverride);
     private List<Server> servers = new ArrayList<>();
+
+    public List<SecurityRequirement> getSecurity() {
+        return security;
+    }
+
+    public void setSecurity(List<SecurityRequirement> requirements) {
+        Objects.requireNonNull(requirements, "requirements must not be null");
+        security.replaceContents(requirements);
+    }
+
+    public boolean hasSecurityOverride() {
+        return securityOverride;
+    }
+
+    public void inheritSecurity() {
+        security.clearSilently();
+        securityOverride = false;
+    }
+
+    private void markSecurityOverride() {
+        securityOverride = true;
+    }
 }

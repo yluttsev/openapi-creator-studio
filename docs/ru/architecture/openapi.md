@@ -210,6 +210,10 @@ extensions остаются в `OpenApiDocument.additionalFields`. Поля Tag 
 3.2 — `summary`, `parent` и `kind` — адаптер 3.1 не заполняет; при прямом вызове
 decoder они сохраняются как дополнительные поля.
 
+Для security на уровне операции decoder сохраняет различие между отсутствующим
+полем `security` и явно заданным пустым массивом. От этого зависит, наследует ли
+операция корневую security или отключает её.
+
 ## Encoder OpenAPI 3.1
 
 Encoder преобразует нормализованную core-модель обратно в общее
@@ -248,7 +252,8 @@ request bodies, responses, security requirements, servers и рекурсивн�
 циклических зависимостей конструкторов. Операция `query` и представление
 `additionalOperations` из OpenAPI 3.2 при экспорте в OpenAPI 3.1 создают
 compatibility errors. Encoder корневого документа будет добавлен следующим
-срезом.
+срезом. Явно пустой security override остаётся пустым массивом, а при
+наследовании поле security на уровне операции не выводится.
 
 ## План реализации
 

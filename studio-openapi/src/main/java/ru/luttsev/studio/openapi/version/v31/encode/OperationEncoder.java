@@ -85,8 +85,7 @@ final class OperationEncoder {
                             pathItemEncoder::encode));
         }
         target.putBoolean("deprecated", source.getDeprecated());
-        if (source.getSecurity() != null
-                && !source.getSecurity().isEmpty()) {
+        if (source.hasSecurityOverride()) {
             target.put(
                     "security",
                     securityRequirementEncoder.encodeList(

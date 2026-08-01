@@ -243,7 +243,42 @@ class PathsOperationsDecoderTest {
                         .getItems()
                         .get("/methods")
                         .getOperations()
-                        .keySet());
+                .keySet());
+    }
+
+    @Test
+    void distinguishesInheritedSecurityFromExplicitEmptyOverride() {
+        ObjectValue source = parse("""
+                openapi: 3.1.2
+                info:
+                  title: Security API
+                  version: 1.0.0
+                paths:
+                  /inherits:
+                    get:
+                      responses: { "200": { description: OK } }
+                  /disabled:
+                    get:
+                      security: []
+                      responses: { "200": { description: OK } }
+                """);
+
+        OpenApiDocument document = successValue(
+                decoder.decode(source, OpenApiVersion.V3_1_2));
+        Operation inherited = document.getPaths()
+                .getItems()
+                .get("/inherits")
+                .getOperations()
+                .get(HttpMethod.GET);
+        Operation disabled = document.getPaths()
+                .getItems()
+                .get("/disabled")
+                .getOperations()
+                .get(HttpMethod.GET);
+
+        assertFalse(inherited.hasSecurityOverride());
+        assertTrue(disabled.hasSecurityOverride());
+        assertTrue(disabled.getSecurity().isEmpty());
     }
 
     @Test
