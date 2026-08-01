@@ -6,9 +6,9 @@ Status: public contracts, the version adapter boundary, the YAML/JSON syntax
 layer, version detection, and OpenAPI 3.1 structural validation are
 implemented as of 2026-08-01. The OpenAPI 3.1 decoder is implemented,
 including root fields, paths, operations, callbacks, webhooks, schemas,
-payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation,
-recursive Schema Object encoder, payload encoder, and paths/operations encoder
-are implemented; the root encoder is still in progress.
+payloads, security schemes, and links. The OpenAPI 3.1 encoder foundation and
+its schema, payload, paths/operations, and components slices are implemented;
+the root encoder is still in progress.
 
 The source code is located under
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -247,9 +247,17 @@ bodies, responses, security requirements, servers, and recursively nested
 callbacks. Callback expressions reuse `PathItemEncoder`, which keeps the
 recursive graph explicit without cyclic constructor dependencies. The OpenAPI
 3.2 `query` operation and `additionalOperations` representation produce
-compatibility errors when targeting OpenAPI 3.1. The root encoder will be
-added in the next slice. Operation security overrides retain an explicitly
-empty array, while inherited security omits the operation-level field.
+compatibility errors when targeting OpenAPI 3.1. Operation security overrides
+retain an explicitly empty array, while inherited security omits the
+operation-level field.
+
+`ComponentsEncoder` composes the schema, payload, callback, path item, and
+reference encoders for every OpenAPI 3.1 Components Object section.
+`SecuritySchemeEncoder` and the OAuth flow encoders cover API key, HTTP,
+mutual TLS, OAuth 2.0, and OpenID Connect schemes. OpenAPI 3.2-only component
+media types, device authorization flow fields, OAuth metadata URLs, and
+security scheme deprecation flags produce compatibility errors and are omitted
+from OpenAPI 3.1 output. The root encoder will be added in the next slice.
 
 ## Planned implementation sequence
 
@@ -257,8 +265,8 @@ empty array, while inherited security omits the operation-level field.
 2. Version detector. Implemented.
 3. Pinned OpenAPI 3.1 structural schema and validator. Implemented.
 4. OpenAPI 3.1 decoder. Implemented.
-5. OpenAPI 3.1 encoder. Foundation, schema, payload, and paths/operations
-   slices implemented; root slice in progress.
+5. OpenAPI 3.1 encoder. Foundation, schema, payload, paths/operations, and
+   components slices implemented; root slice in progress.
 6. Import/export orchestration.
 7. Strict semantic validation integration.
 8. Round-trip and fixture-based integration tests.

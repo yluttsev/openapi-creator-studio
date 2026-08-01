@@ -6,9 +6,9 @@
 YAML/JSON, определение версии и структурная валидация OpenAPI 3.1
 реализованы на 2026-08-01. Decoder OpenAPI 3.1 реализован, включая корневые
 поля, paths, operations, callbacks, webhooks, schemas, payload, security
-schemes и links. Фундамент encoder-а OpenAPI 3.1, рекурсивный encoder Schema
-Object, payload encoder и encoder-ы paths/operations реализованы; encoder
-корневого документа ещё в работе.
+schemes и links. Фундамент encoder-а OpenAPI 3.1, а также schema-, payload-,
+paths/operations- и components-срезы реализованы; encoder корневого документа
+ещё в работе.
 
 Исходный код находится в
 `studio-openapi/src/main/java/ru/luttsev/studio/openapi`.
@@ -251,9 +251,16 @@ request bodies, responses, security requirements, servers и рекурсивн�
 `PathItemEncoder`, поэтому рекурсивный граф остаётся явным и не создаёт
 циклических зависимостей конструкторов. Операция `query` и представление
 `additionalOperations` из OpenAPI 3.2 при экспорте в OpenAPI 3.1 создают
-compatibility errors. Encoder корневого документа будет добавлен следующим
-срезом. Явно пустой security override остаётся пустым массивом, а при
-наследовании поле security на уровне операции не выводится.
+compatibility errors. Явно пустой security override остаётся пустым массивом,
+а при наследовании поле security на уровне операции не выводится.
+
+`ComponentsEncoder` объединяет schema-, payload-, callback-, path item- и
+reference-encoder-ы для всех секций Components Object из OpenAPI 3.1.
+`SecuritySchemeEncoder` и encoder-ы OAuth flows поддерживают API key, HTTP,
+mutual TLS, OAuth 2.0 и OpenID Connect. Поля OpenAPI 3.2 для component media
+types, device authorization flow, URL метаданных OAuth и признака устаревания
+security scheme создают compatibility errors и не попадают в OpenAPI 3.1.
+Encoder корневого документа будет добавлен следующим срезом.
 
 ## План реализации
 
@@ -261,8 +268,8 @@ compatibility errors. Encoder корневого документа будет �
 2. Version detector. Реализован.
 3. Зафиксированная структурная схема OpenAPI 3.1 и validator. Реализованы.
 4. OpenAPI 3.1 decoder. Реализован.
-5. OpenAPI 3.1 encoder. Фундамент, schema-, payload- и paths/operations-срезы
-   реализованы; корневой срез в работе.
+5. OpenAPI 3.1 encoder. Фундамент, schema-, payload-, paths/operations- и
+   components-срезы реализованы; корневой срез в работе.
 6. Orchestration импорта/экспорта.
 7. Интеграция строгой семантической валидации.
 8. Round-trip и интеграционные тесты на fixtures.
