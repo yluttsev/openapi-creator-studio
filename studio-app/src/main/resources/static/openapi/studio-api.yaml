@@ -1,0 +1,764 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI Creator Studio API
+  description: Contract-first REST API for creating and editing OpenAPI documents.
+  version: 0.1.0
+tags:
+  - name: Documents
+    description: Open document sessions and their lifecycle.
+  - name: Commands
+    description: Mutations applied to open documents.
+  - name: Validation
+    description: On-demand document validation.
+  - name: Exports
+    description: OpenAPI document export.
+paths:
+  /api/v1/documents:
+    post:
+      tags:
+        - Documents
+      operationId: createDocument
+      summary: Create a blank OpenAPI document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: The document session was created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenDocumentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/documents/import:
+    post:
+      tags:
+        - Documents
+      operationId: importDocument
+      summary: Import an OpenAPI document
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              minLength: 1
+      responses:
+        '201':
+          description: The imported document session was created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenDocumentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/OpenApiProcessingFailed'
+  /api/v1/documents/{documentId}:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags:
+        - Documents
+      operationId: getDocument
+      summary: Get the current document state
+      responses:
+        '200':
+          description: The current document state.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '404':
+          $ref: '#/components/responses/DocumentNotFound'
+    delete:
+      tags:
+        - Documents
+      operationId: closeDocument
+      summary: Close the document session
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: The document session was closed.
+        '404':
+          $ref: '#/components/responses/DocumentNotFound'
+        '412':
+          $ref: '#/components/responses/RevisionMismatch'
+        '428':
+          $ref: '#/components/responses/RevisionRequired'
+  /api/v1/documents/{documentId}/commands:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    post:
+      tags:
+        - Commands
+      operationId: executeDocumentCommand
+      summary: Execute a document command
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCommandRequest'
+      responses:
+        '200':
+          description: The command was executed.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/DocumentNotFound'
+        '409':
+          $ref: '#/components/responses/CommandRejected'
+        '412':
+          $ref: '#/components/responses/RevisionMismatch'
+        '428':
+          $ref: '#/components/responses/RevisionRequired'
+  /api/v1/documents/{documentId}/validation:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags:
+        - Validation
+      operationId: validateDocument
+      summary: Validate the current document state
+      responses:
+        '200':
+          description: Validation completed.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '404':
+          $ref: '#/components/responses/DocumentNotFound'
+  /api/v1/documents/{documentId}/exports:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    post:
+      tags:
+        - Exports
+      operationId: exportDocument
+      summary: Export the current document state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: The document was exported.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/DocumentNotFound'
+        '422':
+          $ref: '#/components/responses/OpenApiProcessingFailed'
+components:
+  parameters:
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      description: Identifier of an open document session.
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Quoted revision expected by the client.
+      schema:
+        type: string
+        pattern: '^"[0-9]+"$'
+      example: '"3"'
+  headers:
+    ETag:
+      description: Quoted revision of the represented document state.
+      schema:
+        type: string
+        pattern: '^"[0-9]+"$'
+      example: '"4"'
+    Location:
+      description: URL of the created document session.
+      schema:
+        type: string
+        format: uri-reference
+  responses:
+    BadRequest:
+      description: The request is malformed or violates its REST contract.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblem'
+    DocumentNotFound:
+      description: The document session does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblem'
+    CommandRejected:
+      description: The command cannot be applied to the current document state.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommandRejectedProblem'
+    RevisionMismatch:
+      description: The supplied revision does not match the current document revision.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblem'
+    RevisionRequired:
+      description: The If-Match revision header is required.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblem'
+    OpenApiProcessingFailed:
+      description: OpenAPI parsing, validation, mapping, or serialization failed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/OpenApiProcessingProblem'
+  schemas:
+    OpenApiVersion:
+      type: string
+      pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+      example: 3.1.2
+    Revision:
+      type: integer
+      format: int64
+      minimum: 0
+      example: 4
+    DocumentPath:
+      type: string
+      description: JSON Pointer addressing a value in the OpenAPI document.
+      example: /paths/~1users/get
+    CreateDocumentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - apiVersion
+      properties:
+        openApiVersion:
+          allOf:
+            - $ref: '#/components/schemas/OpenApiVersion'
+          default: 3.1.2
+        title:
+          type: string
+          minLength: 1
+          example: Petstore API
+        apiVersion:
+          type: string
+          minLength: 1
+          example: 1.0.0
+        description:
+          type: string
+          example: Example API
+    OpenDocumentResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - revision
+        - title
+        - openApiVersion
+        - apiVersion
+        - diagnostics
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision:
+          $ref: '#/components/schemas/Revision'
+        title:
+          type: string
+        openApiVersion:
+          $ref: '#/components/schemas/OpenApiVersion'
+        apiVersion:
+          type: string
+        diagnostics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostic'
+    DocumentResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - revision
+        - document
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision:
+          $ref: '#/components/schemas/Revision'
+        document:
+          type: object
+          description: Standard OpenAPI JSON representation of the current document.
+          additionalProperties: true
+    CommandType:
+      type: string
+      enum:
+        - ADD_PATH
+        - REMOVE_PATH
+        - ADD_OPERATION
+        - REMOVE_OPERATION
+        - ADD_SCHEMA
+        - ADD_SCHEMA_PROPERTY
+        - REMOVE_SCHEMA_PROPERTY
+        - RENAME_COMPONENT
+        - DELETE_COMPONENT
+    DocumentCommandRequest:
+      oneOf:
+        - $ref: '#/components/schemas/AddPathCommandRequest'
+        - $ref: '#/components/schemas/RemovePathCommandRequest'
+        - $ref: '#/components/schemas/AddOperationCommandRequest'
+        - $ref: '#/components/schemas/RemoveOperationCommandRequest'
+        - $ref: '#/components/schemas/AddSchemaCommandRequest'
+        - $ref: '#/components/schemas/AddSchemaPropertyCommandRequest'
+        - $ref: '#/components/schemas/RemoveSchemaPropertyCommandRequest'
+        - $ref: '#/components/schemas/RenameComponentCommandRequest'
+        - $ref: '#/components/schemas/DeleteComponentCommandRequest'
+      discriminator:
+        propertyName: type
+        mapping:
+          ADD_PATH: '#/components/schemas/AddPathCommandRequest'
+          REMOVE_PATH: '#/components/schemas/RemovePathCommandRequest'
+          ADD_OPERATION: '#/components/schemas/AddOperationCommandRequest'
+          REMOVE_OPERATION: '#/components/schemas/RemoveOperationCommandRequest'
+          ADD_SCHEMA: '#/components/schemas/AddSchemaCommandRequest'
+          ADD_SCHEMA_PROPERTY: '#/components/schemas/AddSchemaPropertyCommandRequest'
+          REMOVE_SCHEMA_PROPERTY: '#/components/schemas/RemoveSchemaPropertyCommandRequest'
+          RENAME_COMPONENT: '#/components/schemas/RenameComponentCommandRequest'
+          DELETE_COMPONENT: '#/components/schemas/DeleteComponentCommandRequest'
+    AddPathCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: ADD_PATH
+        payload:
+          $ref: '#/components/schemas/PathCommandPayload'
+    RemovePathCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: REMOVE_PATH
+        payload:
+          $ref: '#/components/schemas/PathCommandPayload'
+    AddOperationCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: ADD_OPERATION
+        payload:
+          $ref: '#/components/schemas/OperationCommandPayload'
+    RemoveOperationCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: REMOVE_OPERATION
+        payload:
+          $ref: '#/components/schemas/OperationCommandPayload'
+    AddSchemaCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: ADD_SCHEMA
+        payload:
+          $ref: '#/components/schemas/AddSchemaCommandPayload'
+    AddSchemaPropertyCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: ADD_SCHEMA_PROPERTY
+        payload:
+          $ref: '#/components/schemas/SchemaPropertyCommandPayload'
+    RemoveSchemaPropertyCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: REMOVE_SCHEMA_PROPERTY
+        payload:
+          $ref: '#/components/schemas/SchemaPropertyCommandPayload'
+    RenameComponentCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: RENAME_COMPONENT
+        payload:
+          $ref: '#/components/schemas/RenameComponentCommandPayload'
+    DeleteComponentCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/CommandType'
+          const: DELETE_COMPONENT
+        payload:
+          $ref: '#/components/schemas/DeleteComponentCommandPayload'
+    PathCommandPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - pathTemplate
+      properties:
+        pathTemplate:
+          type: string
+          minLength: 1
+          pattern: '^/'
+          example: /users/{userId}
+    OperationCommandPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - pathTemplate
+        - method
+      properties:
+        pathTemplate:
+          type: string
+          minLength: 1
+          pattern: '^/'
+          example: /users
+        method:
+          $ref: '#/components/schemas/HttpMethod'
+    AddSchemaCommandPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: User
+    SchemaPropertyCommandPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - schemaPath
+        - propertyName
+      properties:
+        schemaPath:
+          $ref: '#/components/schemas/DocumentPath'
+        propertyName:
+          type: string
+          minLength: 1
+          example: id
+    RenameComponentCommandPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - componentPath
+        - newName
+      properties:
+        componentPath:
+          $ref: '#/components/schemas/DocumentPath'
+        newName:
+          type: string
+          minLength: 1
+          example: Customer
+    DeleteComponentCommandPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - componentPath
+      properties:
+        componentPath:
+          $ref: '#/components/schemas/DocumentPath'
+    HttpMethod:
+      type: string
+      enum:
+        - GET
+        - PUT
+        - POST
+        - DELETE
+        - OPTIONS
+        - HEAD
+        - PATCH
+        - TRACE
+    CommandResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+        - changedPaths
+      properties:
+        revision:
+          $ref: '#/components/schemas/Revision'
+        changedPaths:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/DocumentPath'
+    ValidationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+        - valid
+        - diagnostics
+      properties:
+        revision:
+          $ref: '#/components/schemas/Revision'
+        valid:
+          type: boolean
+        diagnostics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostic'
+    ExportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - format
+      properties:
+        format:
+          $ref: '#/components/schemas/OpenApiFormat'
+        targetVersion:
+          $ref: '#/components/schemas/OpenApiVersion'
+    ExportResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+        - format
+        - targetVersion
+        - fileName
+        - content
+        - diagnostics
+      properties:
+        revision:
+          $ref: '#/components/schemas/Revision'
+        format:
+          $ref: '#/components/schemas/OpenApiFormat'
+        targetVersion:
+          $ref: '#/components/schemas/OpenApiVersion'
+        fileName:
+          type: string
+          minLength: 1
+          example: openapi.yaml
+        content:
+          type: string
+          minLength: 1
+        diagnostics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostic'
+    OpenApiFormat:
+      type: string
+      enum:
+        - YAML
+        - JSON
+    Diagnostic:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - severity
+        - phase
+        - message
+        - path
+      properties:
+        code:
+          type: string
+          minLength: 1
+        severity:
+          $ref: '#/components/schemas/DiagnosticSeverity'
+        phase:
+          $ref: '#/components/schemas/DiagnosticPhase'
+        message:
+          type: string
+          minLength: 1
+        path:
+          $ref: '#/components/schemas/DocumentPath'
+        sourcePosition:
+          $ref: '#/components/schemas/SourcePosition'
+    DiagnosticSeverity:
+      type: string
+      enum:
+        - ERROR
+        - WARNING
+    DiagnosticPhase:
+      type: string
+      enum:
+        - PARSING
+        - VERSION_DETECTION
+        - STRUCTURAL_VALIDATION
+        - MAPPING
+        - SEMANTIC_VALIDATION
+        - VERSION_COMPATIBILITY
+        - SERIALIZATION
+    SourcePosition:
+      type: object
+      additionalProperties: false
+      required:
+        - line
+        - column
+      properties:
+        line:
+          type: integer
+          format: int32
+          minimum: 1
+        column:
+          type: integer
+          format: int32
+          minimum: 1
+    CommandIssue:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - path
+        - relatedPaths
+      properties:
+        code:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+        path:
+          $ref: '#/components/schemas/DocumentPath'
+        relatedPaths:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/DocumentPath'
+    RequestViolation:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+    ApiProblem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - code
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+          minLength: 1
+        status:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+          minLength: 1
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          minLength: 1
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestViolation'
+    CommandRejectedProblem:
+      allOf:
+        - $ref: '#/components/schemas/ApiProblem'
+        - type: object
+          required:
+            - issues
+          properties:
+            issues:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/CommandIssue'
+    OpenApiProcessingProblem:
+      allOf:
+        - $ref: '#/components/schemas/ApiProblem'
+        - type: object
+          required:
+            - diagnostics
+          properties:
+            diagnostics:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/Diagnostic'
