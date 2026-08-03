@@ -9,11 +9,13 @@ Documentation:
 - English: [`backend-context.md`](docs/en/backend-context.md) and
   architecture docs for
   [`studio-core`](docs/en/architecture/core.md) and
-  [`studio-openapi`](docs/en/architecture/openapi.md);
+  [`studio-openapi`](docs/en/architecture/openapi.md), and
+  [`studio-app`](docs/en/architecture/app.md);
 - Русский: [`backend-context.md`](docs/ru/backend-context.md) и
   архитектура
   [`studio-core`](docs/ru/architecture/core.md) и
-  [`studio-openapi`](docs/ru/architecture/openapi.md).
+  [`studio-openapi`](docs/ru/architecture/openapi.md), и
+  [`studio-app`](docs/ru/architecture/app.md).
 
 Before changing the backend architecture or code, read the backend context in
 either language. For work in `studio-core`, also read the corresponding core
