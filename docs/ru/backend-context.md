@@ -26,7 +26,7 @@ YAML, JSON, HTTP, Spring или конкретному хранилищу.
 | --- | --- | --- |
 | `studio-core` | Модель документа в памяти, создание, навигация, ссылки, семантическая валидация и команды редактирования | Реализуется и покрыт тестами |
 | `studio-openapi` | Преобразование OpenAPI YAML/JSON в нормализованную core-модель и обратно, а также version-specific проверки | Реализованы строгие end-to-end импорт и экспорт OpenAPI 3.1 с round-trip тестами |
-| `studio-app` | Spring Boot composition root, будущие REST API, application services и подключение инфраструктуры | Создано запускаемое Spring Boot приложение, прикладная архитектура ещё не спроектирована |
+| `studio-app` | Spring Boot composition root, REST API, application services и подключение инфраструктуры | Реализованы API-first REST-контракт и in-memory workspace документов; реализации endpoint запланированы |
 
 Зависимости направлены внутрь:
 
@@ -40,7 +40,8 @@ studio-app -> studio-openapi -> studio-core
 Подробная архитектурная документация:
 
 - [architecture/core.md](architecture/core.md);
-- [architecture/openapi.md](architecture/openapi.md).
+- [architecture/openapi.md](architecture/openapi.md);
+- [architecture/app.md](architecture/app.md).
 
 ## Стратегия версий OpenAPI
 
