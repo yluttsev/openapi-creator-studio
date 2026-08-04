@@ -47,6 +47,18 @@ class InMemoryDocumentWorkspaceTest {
     }
 
     @Test
+    void inspectsDocumentAtCurrentRevision() {
+        DocumentSession created = workspace.create(document());
+
+        String title = workspace.inspect(
+                        created.id(),
+                        session -> session.document().getInfo().getTitle())
+                .orElseThrow();
+
+        assertThat(title).isEqualTo("Test API");
+    }
+
+    @Test
     void deletesExistingDocument() {
         DocumentSession created = workspace.create(document());
 

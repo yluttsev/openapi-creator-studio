@@ -26,7 +26,7 @@ logic to YAML, JSON, HTTP, Spring, or a particular storage technology.
 | --- | --- | --- |
 | `studio-core` | In-memory document model, creation, navigation, references, semantic validation, and editing commands | Implemented and covered by tests |
 | `studio-openapi` | Conversion between OpenAPI YAML/JSON and the normalized core model, plus version-specific validation | End-to-end strict import and export for OpenAPI 3.1 implemented and covered by round-trip tests |
-| `studio-app` | Spring Boot composition root, REST API, application services, and infrastructure integration | API-first REST contract, in-memory workspace, document lifecycle, and command execution endpoints are implemented |
+| `studio-app` | Spring Boot composition root, REST API, application services, and infrastructure integration | API-first REST contract, in-memory workspace, document lifecycle, command execution, and manual validation endpoints are implemented |
 
 Dependencies point inward:
 

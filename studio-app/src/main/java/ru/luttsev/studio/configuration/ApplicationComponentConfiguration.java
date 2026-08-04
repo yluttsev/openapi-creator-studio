@@ -3,6 +3,7 @@ package ru.luttsev.studio.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.luttsev.studio.core.document.OpenApiDocumentFactory;
+import ru.luttsev.studio.core.validation.DocumentValidator;
 import ru.luttsev.studio.openapi.importing.DefaultOpenApiImporter;
 import ru.luttsev.studio.openapi.importing.OpenApiImporter;
 import ru.luttsev.studio.openapi.version.OpenApiVersionAdapterRegistry;
@@ -24,5 +25,10 @@ public class ApplicationComponentConfiguration {
     @Bean
     OpenApiVersionAdapterRegistry openApiVersionAdapterRegistry() {
         return OpenApiVersionAdapters.defaults();
+    }
+
+    @Bean
+    DocumentValidator documentValidator() {
+        return new DocumentValidator();
     }
 }

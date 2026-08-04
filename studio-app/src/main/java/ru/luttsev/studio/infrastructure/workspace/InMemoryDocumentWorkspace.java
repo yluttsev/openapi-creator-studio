@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import org.springframework.stereotype.Component;
 import ru.luttsev.studio.application.workspace.DocumentSession;
 import ru.luttsev.studio.application.workspace.DocumentWorkspace;
@@ -40,6 +41,18 @@ public final class InMemoryDocumentWorkspace implements DocumentWorkspace {
         return storedDocument == null
                 ? Optional.empty()
                 : Optional.of(storedDocument.snapshot());
+    }
+
+    @Override
+    public <T> Optional<T> inspect(
+            UUID documentId,
+            Function<DocumentSession, T> inspection) {
+        Objects.requireNonNull(documentId, "documentId must not be null");
+        Objects.requireNonNull(inspection, "inspection must not be null");
+        StoredDocument storedDocument = documents.get(documentId);
+        return storedDocument == null
+                ? Optional.empty()
+                : Optional.ofNullable(storedDocument.inspect(inspection));
     }
 
     @Override

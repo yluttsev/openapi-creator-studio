@@ -2,6 +2,7 @@ package ru.luttsev.studio.infrastructure.workspace;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import ru.luttsev.studio.application.workspace.DocumentSession;
 import ru.luttsev.studio.application.workspace.RevisionConflictException;
 import ru.luttsev.studio.application.workspace.WorkspaceCommandExecution;
@@ -26,6 +27,11 @@ final class StoredDocument {
 
     synchronized DocumentSession snapshot() {
         return new DocumentSession(id, revision, document);
+    }
+
+    synchronized <T> T inspect(Function<DocumentSession, T> inspection) {
+        Objects.requireNonNull(inspection, "inspection must not be null");
+        return inspection.apply(snapshot());
     }
 
     synchronized WorkspaceCommandExecution execute(
