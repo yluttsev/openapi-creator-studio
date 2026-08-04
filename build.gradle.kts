@@ -44,6 +44,13 @@ subprojects {
         }
 
         tasks.withType<JacocoReport>().configureEach {
+            // classDirectories reads compileJava's output; normally that
+            // ordering is only implied via jacocoTestReport -> test ->
+            // compileJava. CI runs the Sonar scan with `-x test` (test
+            // already ran in an earlier job), which drops that implicit
+            // link and trips Gradle's task validation - depend on it
+            // explicitly instead.
+            dependsOn(tasks.named("compileJava"))
             reports {
                 xml.required.set(true)
                 html.required.set(true)
