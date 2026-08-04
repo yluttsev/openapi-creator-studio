@@ -60,7 +60,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         } else if (status >= 400) {
             log.warn(OUTCOME_FORMAT, method, uri, status, durationMs);
         } else {
-            log.info(OUTCOME_FORMAT, method, uri, status, durationMs);
+            log.debug(OUTCOME_FORMAT, method, uri, status, durationMs);
         }
     }
 
