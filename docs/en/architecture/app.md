@@ -83,7 +83,14 @@ inspection. Validation does not mutate the document or increment its revision. T
 response contains that revision, the aggregate validity flag, and semantic diagnostics;
 the same revision is returned as a strong ETag.
 
+## Document export
+
+`DocumentExportService` runs the strict `OpenApiExporter` pipeline through a workspace
+inspection. The client selects YAML or JSON and may select a target OpenAPI version;
+when omitted, the target defaults to `3.1.2`. A successful response contains the
+consistent revision, format, target version, suggested file name, serialized content,
+and non-error diagnostics. Export failures use the shared OpenAPI processing error.
+
 ## Planned application layers
 
-Upcoming work adds export endpoints, completes common Problem Details handling, and adds
-HTTP integration tests.
+Upcoming work completes common Problem Details handling and adds HTTP integration tests.
