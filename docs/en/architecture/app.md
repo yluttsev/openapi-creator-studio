@@ -15,7 +15,9 @@ sources are build artifacts and are not committed. Hand-written controllers impl
 the generated interfaces.
 
 Generated transport types must not be used by `studio-core`. The application layer maps
-between generated DTOs and core types explicitly.
+between generated DTOs and core types explicitly. Transport mappers use MapStruct with
+Spring component and constructor injection; HTTP status and header construction remains
+in controllers.
 
 ## Document workspace
 
@@ -44,3 +46,18 @@ the REST contract or core model.
 
 Upcoming work adds document lifecycle services, REST/core mappers, typed command handlers,
 manual validation and export services, controllers, and Problem Details error mapping.
+## Document lifecycle
+
+The first application slice implements the generated `DocumentsApi` contract.
+It creates blank OpenAPI 3.1 documents, strictly imports YAML or JSON, returns
+the current standard JSON representation, and closes document sessions.
+
+`DocumentLifecycleService` coordinates the core document factory, the OpenAPI
+importer, and `DocumentWorkspace`. `DocumentRepresentationService` uses the
+version adapter without running export orchestration, so an intermediate editor
+state can still be returned to the UI. REST mapping and diagnostic conversion
+remain in the web layer.
+
+Creation and import return revision `0`, `Location`, and a strong ETag containing
+the revision. Closing requires the same revision through `If-Match`; checking
+and removal are atomic in the in-memory workspace.
