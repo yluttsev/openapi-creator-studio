@@ -42,10 +42,6 @@ The port keeps storage replaceable. A future persistent adapter may implement th
 operations with database transactions or distributed optimistic locking without changing
 the REST contract or core model.
 
-## Planned application layers
-
-Upcoming work adds document lifecycle services, REST/core mappers, typed command handlers,
-manual validation and export services, controllers, and Problem Details error mapping.
 ## Document lifecycle
 
 The first application slice implements the generated `DocumentsApi` contract.
@@ -61,3 +57,21 @@ remain in the web layer.
 Creation and import return revision `0`, `Location`, and a strong ETag containing
 the revision. Closing requires the same revision through `If-Match`; checking
 and removal are atomic in the in-memory workspace.
+
+## Command dispatch
+
+The generated polymorphic `DocumentCommandRequest` is handled by a registry of typed
+`DocumentCommandRequestHandler` components. Each handler translates exactly one REST
+request class into a core `DocumentCommand`; adding a command does not require modifying
+the dispatcher. Duplicate registrations are rejected at startup.
+
+`DocumentCommandService` executes the translated command through `DocumentWorkspace`.
+A successful command returns the new revision and changed JSON Pointer paths. A rejected
+core command keeps the revision unchanged and becomes a `409` Problem Details response
+with structured command issues. Missing sessions and stale revisions use the shared
+`404` and `412` mappings.
+
+## Planned application layers
+
+Upcoming work adds manual validation and export endpoints, completes common Problem
+Details handling, and adds HTTP integration tests.
