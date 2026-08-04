@@ -9,13 +9,11 @@ import org.junit.jupiter.api.Test;
 import ru.luttsev.studio.application.document.DocumentNotFoundException;
 import ru.luttsev.studio.application.document.OpenApiProcessingException;
 import ru.luttsev.studio.application.workspace.DocumentSession;
-import ru.luttsev.studio.core.document.NewDocumentParameters;
-import ru.luttsev.studio.core.document.OpenApiDocumentFactory;
-import ru.luttsev.studio.core.model.OpenApiDocument;
 import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.infrastructure.workspace.InMemoryDocumentWorkspace;
 import ru.luttsev.studio.openapi.exporting.DefaultOpenApiExporter;
 import ru.luttsev.studio.openapi.format.OpenApiFormat;
+import ru.luttsev.studio.testsupport.OpenApiDocuments;
 
 class DocumentExportServiceTest {
 
@@ -32,7 +30,7 @@ class DocumentExportServiceTest {
 
     @Test
     void exportsCurrentDocumentWithDefaultTargetVersion() {
-        DocumentSession session = workspace.create(document());
+        DocumentSession session = workspace.create(OpenApiDocuments.blank());
 
         DocumentExport result = service.export(
                 session.id(),
@@ -49,9 +47,8 @@ class DocumentExportServiceTest {
 
     @Test
     void rejectsInvalidIntermediateDocument() {
-        OpenApiDocument document = document();
-        document.setOpenApiVersion(null);
-        DocumentSession session = workspace.create(document);
+        DocumentSession session = workspace.create(
+                OpenApiDocuments.blankWithoutVersion());
 
         assertThatThrownBy(() -> service.export(
                 session.id(),
@@ -71,12 +68,5 @@ class DocumentExportServiceTest {
                 OpenApiFormat.JSON,
                 null))
                 .isInstanceOf(DocumentNotFoundException.class);
-    }
-
-    private static OpenApiDocument document() {
-        return new OpenApiDocumentFactory().create(new NewDocumentParameters(
-                OpenApiVersion.V3_1_2,
-                "Test API",
-                "1.0.0"));
     }
 }

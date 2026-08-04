@@ -13,10 +13,8 @@ import ru.luttsev.studio.application.workspace.WorkspaceCommandExecution;
 import ru.luttsev.studio.core.command.path.AddPathCommand;
 import ru.luttsev.studio.core.command.result.CommandRejected;
 import ru.luttsev.studio.core.command.result.CommandSucceeded;
-import ru.luttsev.studio.core.document.NewDocumentParameters;
-import ru.luttsev.studio.core.document.OpenApiDocumentFactory;
 import ru.luttsev.studio.core.model.OpenApiDocument;
-import ru.luttsev.studio.core.model.OpenApiVersion;
+import ru.luttsev.studio.testsupport.OpenApiDocuments;
 
 class InMemoryDocumentWorkspaceTest {
 
@@ -29,7 +27,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void createsAndFindsDocumentAtInitialRevision() {
-        OpenApiDocument document = document();
+        OpenApiDocument document = OpenApiDocuments.blank();
 
         DocumentSession created = workspace.create(document);
 
@@ -48,7 +46,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void inspectsDocumentAtCurrentRevision() {
-        DocumentSession created = workspace.create(document());
+        DocumentSession created = workspace.create(OpenApiDocuments.blank());
 
         String title = workspace.inspect(
                         created.id(),
@@ -60,7 +58,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void deletesExistingDocument() {
-        DocumentSession created = workspace.create(document());
+        DocumentSession created = workspace.create(OpenApiDocuments.blank());
 
         boolean deleted = workspace.delete(created.id(), created.revision());
 
@@ -71,7 +69,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void rejectsDeleteWithStaleRevision() {
-        DocumentSession created = workspace.create(document());
+        DocumentSession created = workspace.create(OpenApiDocuments.blank());
         workspace.execute(
                 created.id(),
                 created.revision(),
@@ -87,7 +85,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void incrementsRevisionAfterSuccessfulCommand() {
-        DocumentSession created = workspace.create(document());
+        DocumentSession created = workspace.create(OpenApiDocuments.blank());
 
         WorkspaceCommandExecution execution = workspace.execute(
                         created.id(),
@@ -103,7 +101,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void keepsRevisionAfterRejectedCommand() {
-        DocumentSession created = workspace.create(document());
+        DocumentSession created = workspace.create(OpenApiDocuments.blank());
         workspace.execute(
                 created.id(),
                 created.revision(),
@@ -121,7 +119,7 @@ class InMemoryDocumentWorkspaceTest {
 
     @Test
     void rejectsCommandWithStaleRevision() {
-        DocumentSession created = workspace.create(document());
+        DocumentSession created = workspace.create(OpenApiDocuments.blank());
         workspace.execute(
                 created.id(),
                 created.revision(),
@@ -139,12 +137,5 @@ class InMemoryDocumentWorkspaceTest {
                     assertThat(conflict.getExpectedRevision()).isZero();
                     assertThat(conflict.getActualRevision()).isEqualTo(1);
                 });
-    }
-
-    private static OpenApiDocument document() {
-        return new OpenApiDocumentFactory().create(new NewDocumentParameters(
-                OpenApiVersion.V3_1_2,
-                "Test API",
-                "1.0.0"));
     }
 }
