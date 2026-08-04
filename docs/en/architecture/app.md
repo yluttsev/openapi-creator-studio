@@ -91,6 +91,15 @@ when omitted, the target defaults to `3.1.2`. A successful response contains the
 consistent revision, format, target version, suggested file name, serialized content,
 and non-error diagnostics. Export failures use the shared OpenAPI processing error.
 
+## Problem Details
+
+All application and Spring MVC request failures use the generated Problem Details
+models and `application/problem+json`. Malformed or missing JSON, unknown enum values,
+invalid parameter formats, and Bean Validation failures produce `400`; validation
+violations include stable field names and safe messages. A missing `If-Match` header is
+distinguished as `428`, while document, concurrency, command, and OpenAPI processing
+failures retain their `404`, `412`, `409`, and `422` responses.
+
 ## Planned application layers
 
-Upcoming work completes common Problem Details handling and adds HTTP integration tests.
+Upcoming work adds HTTP integration tests.
