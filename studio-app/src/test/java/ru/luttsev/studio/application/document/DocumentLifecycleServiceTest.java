@@ -10,6 +10,7 @@ import ru.luttsev.studio.core.model.OpenApiVersion;
 import ru.luttsev.studio.infrastructure.workspace.InMemoryDocumentWorkspace;
 import ru.luttsev.studio.openapi.importing.DefaultOpenApiImporter;
 import ru.luttsev.studio.openapi.version.OpenApiVersionAdapters;
+import ru.luttsev.studio.testsupport.ClasspathResources;
 
 class DocumentLifecycleServiceTest {
 
@@ -45,13 +46,8 @@ class DocumentLifecycleServiceTest {
 
     @Test
     void importsValidYaml() {
-        OpenedDocument opened = service.importDocument("""
-                openapi: 3.1.2
-                info:
-                  title: Imported API
-                  version: 2.0.0
-                paths: {}
-                """);
+        OpenedDocument opened = service.importDocument(
+                ClasspathResources.readString("/openapi/valid-openapi.yaml"));
 
         assertThat(opened.session().document().getInfo().getTitle())
                 .isEqualTo("Imported API");
@@ -59,7 +55,10 @@ class DocumentLifecycleServiceTest {
 
     @Test
     void rejectsInvalidImportWithoutCreatingSession() {
-        assertThatThrownBy(() -> service.importDocument("not: openapi"))
+        String invalidYaml =
+                ClasspathResources.readString("/openapi/invalid-openapi.yaml");
+
+        assertThatThrownBy(() -> service.importDocument(invalidYaml))
                 .isInstanceOf(OpenApiProcessingException.class)
                 .satisfies(exception -> assertThat(
                         ((OpenApiProcessingException) exception)

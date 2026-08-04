@@ -104,6 +104,19 @@ class ApiExceptionHandlerTest {
                 .isEqualTo("Unsupported value");
     }
 
+    @Test
+    void mapsUnexpectedExceptionToSafeInternalServerError() {
+        ResponseEntity<ApiProblem> response = handler.handleUnexpected(
+                new IllegalStateException("Sensitive internal detail"));
+
+        assertProblem(
+                response,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR");
+        assertThat(response.getBody().getDetail())
+                .doesNotContain("Sensitive internal detail");
+    }
+
     private static void assertProblem(
             ResponseEntity<ApiProblem> response,
             HttpStatus status,
