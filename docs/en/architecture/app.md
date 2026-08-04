@@ -42,6 +42,11 @@ The port keeps storage replaceable. A future persistent adapter may implement th
 operations with database transactions or distributed optimistic locking without changing
 the REST contract or core model.
 
+Read-only operations use `DocumentWorkspace.inspect`. The inspection callback runs under
+the same per-document lock as commands, so the observed revision and the result derived
+from the document belong to one consistent snapshot. The callback must not retain or
+expose the mutable document graph.
+
 ## Document lifecycle
 
 The first application slice implements the generated `DocumentsApi` contract.
@@ -71,7 +76,14 @@ core command keeps the revision unchanged and becomes a `409` Problem Details re
 with structured command issues. Missing sessions and stale revisions use the shared
 `404` and `412` mappings.
 
+## Manual validation
+
+`DocumentValidationService` runs the core `DocumentValidator` through a workspace
+inspection. Validation does not mutate the document or increment its revision. The REST
+response contains that revision, the aggregate validity flag, and semantic diagnostics;
+the same revision is returned as a strong ETag.
+
 ## Planned application layers
 
-Upcoming work adds manual validation and export endpoints, completes common Problem
-Details handling, and adds HTTP integration tests.
+Upcoming work adds export endpoints, completes common Problem Details handling, and adds
+HTTP integration tests.
