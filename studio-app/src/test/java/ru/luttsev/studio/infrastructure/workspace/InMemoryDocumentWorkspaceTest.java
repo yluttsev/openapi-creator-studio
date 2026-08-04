@@ -50,11 +50,27 @@ class InMemoryDocumentWorkspaceTest {
     void deletesExistingDocument() {
         DocumentSession created = workspace.create(document());
 
-        boolean deleted = workspace.delete(created.id());
+        boolean deleted = workspace.delete(created.id(), created.revision());
 
         assertThat(deleted).isTrue();
         assertThat(workspace.find(created.id())).isEmpty();
-        assertThat(workspace.delete(created.id())).isFalse();
+        assertThat(workspace.delete(created.id(), created.revision())).isFalse();
+    }
+
+    @Test
+    void rejectsDeleteWithStaleRevision() {
+        DocumentSession created = workspace.create(document());
+        workspace.execute(
+                created.id(),
+                created.revision(),
+                new AddPathCommand("/users"));
+
+        assertThatThrownBy(() -> workspace.delete(
+                created.id(),
+                created.revision()))
+                .isInstanceOf(RevisionConflictException.class);
+
+        assertThat(workspace.find(created.id())).isPresent();
     }
 
     @Test
