@@ -1,10 +1,18 @@
 plugins {
     base
+    alias(libs.plugins.sonarqube)
 }
 
 allprojects {
     group = "ru.luttsev"
     version = "0.1.0-SNAPSHOT"
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "yluttsev_openapi-creator-studio")
+        property("sonar.organization", "yluttsev")
+    }
 }
 
 subprojects {
@@ -44,6 +52,10 @@ subprojects {
 
         tasks.named("check") {
             dependsOn(tasks.named("jacocoTestReport"))
+        }
+
+        rootProject.tasks.named("sonar") {
+            dependsOn(tasks.named("check"))
         }
     }
 }
