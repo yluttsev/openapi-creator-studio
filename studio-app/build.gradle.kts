@@ -137,3 +137,14 @@ sourceSets.named("integrationTest") {
     compileClasspath += sourceSets.named("main").get().output
     runtimeClasspath += sourceSets.named("main").get().output
 }
+
+// Combine coverage from unit/slice tests and the integration suite into a
+// single report, since Sonar reads coverage per module, not per test task.
+tasks.named<org.gradle.testing.jacoco.tasks.JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("integrationTest"))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.dir("jacoco")) {
+            include("test.exec", "integrationTest.exec")
+        }
+    )
+}

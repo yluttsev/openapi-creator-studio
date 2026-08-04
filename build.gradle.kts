@@ -1,7 +1,3 @@
-import org.gradle.api.plugins.JavaPluginExtension
-import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.api.tasks.testing.Test
-
 plugins {
     base
 }
@@ -13,10 +9,16 @@ allprojects {
 
 subprojects {
     pluginManager.withPlugin("java") {
+        apply(plugin = "jacoco")
+
         extensions.configure<JavaPluginExtension> {
             toolchain {
                 languageVersion = JavaLanguageVersion.of(25)
             }
+        }
+
+        extensions.configure<JacocoPluginExtension> {
+            toolVersion = "0.8.14"
         }
 
         dependencies {
@@ -31,6 +33,17 @@ subprojects {
 
         tasks.withType<Test>().configureEach {
             useJUnitPlatform()
+        }
+
+        tasks.withType<JacocoReport>().configureEach {
+            reports {
+                xml.required.set(true)
+                html.required.set(true)
+            }
+        }
+
+        tasks.named("check") {
+            dependsOn(tasks.named("jacocoTestReport"))
         }
     }
 }
