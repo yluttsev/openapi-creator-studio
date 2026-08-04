@@ -16,5 +16,5 @@ public interface DocumentWorkspace {
             long expectedRevision,
             DocumentCommand command);
 
-    boolean delete(UUID documentId);
+    boolean delete(UUID documentId, long expectedRevision);
 }
