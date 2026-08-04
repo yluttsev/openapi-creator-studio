@@ -123,11 +123,6 @@ tasks.named("check") {
     dependsOn(tasks.named("openApiValidate"))
 }
 
-// The plain `jar` task is disabled above (this app ships as a `bootJar`), so
-// any project-dependency resolution (`implementation(project())`,
-// `java-test-fixtures`' rewiring of `test`) that expects a jar artifact ends
-// up with a missing file on the classpath instead of the compiled classes.
-// Point both test sourceSets at the real `main` output directly.
 sourceSets.named("test") {
     compileClasspath += sourceSets.named("main").get().output
     runtimeClasspath += sourceSets.named("main").get().output
@@ -136,4 +131,25 @@ sourceSets.named("test") {
 sourceSets.named("integrationTest") {
     compileClasspath += sourceSets.named("main").get().output
     runtimeClasspath += sourceSets.named("main").get().output
+}
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("integrationTest"))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.dir("jacoco")) {
+            include("test.exec", "integrationTest.exec")
+        }
+    )
+    classDirectories.setFrom(
+        classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    "ru/luttsev/studio/generated/**",
+                    "org/openapitools/configuration/**",
+                    "**/*Impl.class",
+                    "ru/luttsev/studio/Application.class"
+                )
+            }
+        }
+    )
 }
