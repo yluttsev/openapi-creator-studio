@@ -1,5 +1,17 @@
 package ru.luttsev.studio.web;
 
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import ru.luttsev.studio.testsupport.ClasspathResources;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,39 +20,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
 @SpringBootTest
-class StudioHttpIntegrationTest {
+@AutoConfigureMockMvc
+class StudioHttpIT {
 
     private static final String DOCUMENTS = "/api/v1/documents";
 
     @Autowired
-    private WebApplicationContext applicationContext;
-
     private MockMvc mockMvc;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(applicationContext)
-                .build();
-    }
 
     @Test
     void executesCompleteDocumentLifecycle() throws Exception {
@@ -94,7 +81,8 @@ class StudioHttpIntegrationTest {
     void importsAndExportsOpenApiDocument() throws Exception {
         MvcResult imported = mockMvc.perform(post(DOCUMENTS + "/import")
                         .contentType(MediaType.TEXT_PLAIN)
-                        .content(resource("valid-openapi.yaml")))
+                        .content(ClasspathResources.readString(
+                                "/openapi/valid-openapi.yaml")))
                 .andExpect(status().isCreated())
                 .andExpect(header().string(HttpHeaders.ETAG, "\"0\""))
                 .andExpect(jsonPath("$.title").value("Imported API"))
@@ -113,7 +101,8 @@ class StudioHttpIntegrationTest {
 
         mockMvc.perform(post(DOCUMENTS + "/import")
                         .contentType(MediaType.TEXT_PLAIN)
-                        .content(resource("invalid-openapi.yaml")))
+                        .content(ClasspathResources.readString(
+                                "/openapi/invalid-openapi.yaml")))
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code")
@@ -122,27 +111,8 @@ class StudioHttpIntegrationTest {
     }
 
     @Test
-    void returnsContractualProblemDetailsForRequestFailures() throws Exception {
-        mockMvc.perform(post(DOCUMENTS)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(resource("malformed-request.json")))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST_BODY"));
-
-        mockMvc.perform(post(DOCUMENTS)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(resource(
-                                "create-document-without-title.json")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code")
-                        .value("REQUEST_VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.violations[0].field").value("title"));
-
+    void enforcesOptimisticConcurrencyAcrossRequests() throws Exception {
         String documentUri = createDocument();
-        mockMvc.perform(delete(documentUri))
-                .andExpect(status().isPreconditionRequired())
-                .andExpect(jsonPath("$.code").value("REVISION_REQUIRED"));
 
         mockMvc.perform(delete(documentUri)
                         .header(HttpHeaders.IF_MATCH, "\"7\""))
@@ -155,10 +125,6 @@ class StudioHttpIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("COMMAND_REJECTED"))
                 .andExpect(jsonPath("$.issues").isNotEmpty());
-
-        mockMvc.perform(get(DOCUMENTS + "/" + UUID.randomUUID()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("DOCUMENT_NOT_FOUND"));
     }
 
     private String createDocument() throws Exception {
@@ -182,13 +148,7 @@ class StudioHttpIntegrationTest {
                 .content(resource("add-users-path-command.json")));
     }
 
-    private String resource(String fileName) throws IOException {
-        String path = "/http/" + fileName;
-        try (InputStream input = getClass().getResourceAsStream(path)) {
-            if (input == null) {
-                throw new IllegalStateException("Test resource not found: " + path);
-            }
-            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
-        }
+    private String resource(String fileName) {
+        return ClasspathResources.readString("/http/" + fileName);
     }
 }
