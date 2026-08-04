@@ -6,6 +6,7 @@ import java.util.List;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,6 +30,7 @@ import ru.luttsev.studio.generated.model.RequestViolation;
 import ru.luttsev.studio.web.command.CommandResponseMapper;
 import ru.luttsev.studio.web.document.DiagnosticMapper;
 
+@Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
 public final class ApiExceptionHandler {
@@ -41,6 +43,9 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(CommandRejectedException.class)
     ResponseEntity<CommandRejectedProblem> handleCommandRejected(
             CommandRejectedException exception) {
+        log.warn(
+                "Document command rejected: {} issue(s)",
+                exception.getIssues().size());
         CommandRejectedProblem problem = new CommandRejectedProblem(
                 ABOUT_BLANK,
                 "Command rejected",
@@ -56,6 +61,7 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(DocumentNotFoundException.class)
     ResponseEntity<ApiProblem> handleNotFound(
             DocumentNotFoundException exception) {
+        log.warn("Document not found: {}", exception.getDocumentId());
         return problem(
                 HttpStatus.NOT_FOUND,
                 "Document not found",
@@ -66,6 +72,11 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(RevisionConflictException.class)
     ResponseEntity<ApiProblem> handleRevisionConflict(
             RevisionConflictException exception) {
+        log.warn(
+                "Revision conflict for document {}: expected {}, actual {}",
+                exception.getDocumentId(),
+                exception.getExpectedRevision(),
+                exception.getActualRevision());
         return problem(
                 HttpStatus.PRECONDITION_FAILED,
                 "Revision mismatch",
@@ -76,6 +87,7 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ApiProblem> handleBadRequest(
             IllegalArgumentException exception) {
+        log.warn("Bad request: {}", exception.getMessage());
         return problem(
                 HttpStatus.BAD_REQUEST,
                 "Bad request",
@@ -86,6 +98,7 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ApiProblem> handleUnreadableMessage(
             HttpMessageNotReadableException exception) {
+        log.warn("Malformed request body: {}", exception.getMessage());
         return problem(
                 HttpStatus.BAD_REQUEST,
                 "Malformed request body",
@@ -96,6 +109,7 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(MissingRequestHeaderException.class)
     ResponseEntity<ApiProblem> handleMissingRequestHeader(
             MissingRequestHeaderException exception) {
+        log.warn("Missing request header: {}", exception.getHeaderName());
         if ("If-Match".equalsIgnoreCase(exception.getHeaderName())) {
             return problem(
                     HttpStatus.PRECONDITION_REQUIRED,
@@ -123,6 +137,7 @@ public final class ApiExceptionHandler {
                 violations.add(new RequestViolation(
                         error.getObjectName(),
                         message(error))));
+        log.warn("Request validation failed: {} violation(s)", violations.size());
         return badRequest("Request validation failed", violations);
     }
 
@@ -138,6 +153,7 @@ public final class ApiExceptionHandler {
                             field,
                             message(error))));
         });
+        log.warn("Request validation failed: {} violation(s)", violations.size());
         return badRequest("Request validation failed", violations);
     }
 
@@ -151,12 +167,16 @@ public final class ApiExceptionHandler {
                     violation.getPropertyPath().toString(),
                     violation.getMessage()));
         }
+        log.warn("Request validation failed: {} violation(s)", violations.size());
         return badRequest("Request validation failed", violations);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     ResponseEntity<ApiProblem> handleTypeMismatch(
             MethodArgumentTypeMismatchException exception) {
+        log.warn(
+                "Invalid request parameter: {}",
+                exception.getName());
         return badRequest(
                 "Request parameter has an invalid value",
                 List.of(new RequestViolation(
@@ -167,6 +187,10 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(OpenApiProcessingException.class)
     ResponseEntity<OpenApiProcessingProblem> handleOpenApiProcessing(
             OpenApiProcessingException exception) {
+        log.warn(
+                "{}: {} diagnostic(s)",
+                exception.getMessage(),
+                exception.getDiagnostics().size());
         OpenApiProcessingProblem problem = new OpenApiProcessingProblem(
                 ABOUT_BLANK,
                 "OpenAPI processing failed",
@@ -177,6 +201,16 @@ public final class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
+    }
+
+    @ExceptionHandler(Exception.class)
+    ResponseEntity<ApiProblem> handleUnexpected(Exception exception) {
+        log.error("Unhandled exception while processing request", exception);
+        return problem(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal server error",
+                "An unexpected error occurred",
+                "INTERNAL_ERROR");
     }
 
     private ResponseEntity<ApiProblem> problem(

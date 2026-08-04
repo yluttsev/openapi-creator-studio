@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.luttsev.studio.application.workspace.DocumentSession;
 import ru.luttsev.studio.application.workspace.DocumentWorkspace;
@@ -14,6 +15,7 @@ import ru.luttsev.studio.core.command.CommandExecutor;
 import ru.luttsev.studio.core.command.DocumentCommand;
 import ru.luttsev.studio.core.model.OpenApiDocument;
 
+@Slf4j
 @Component
 public final class InMemoryDocumentWorkspace implements DocumentWorkspace {
 
@@ -29,6 +31,10 @@ public final class InMemoryDocumentWorkspace implements DocumentWorkspace {
             UUID id = UUID.randomUUID();
             StoredDocument storedDocument = new StoredDocument(id, document);
             if (documents.putIfAbsent(id, storedDocument) == null) {
+                log.debug(
+                        "Stored document {} ({} document(s) in workspace)",
+                        id,
+                        documents.size());
                 return storedDocument.snapshot();
             }
         }
@@ -80,7 +86,14 @@ public final class InMemoryDocumentWorkspace implements DocumentWorkspace {
         }
         synchronized (storedDocument) {
             storedDocument.verifyRevision(expectedRevision);
-            return documents.remove(documentId, storedDocument);
+            boolean removed = documents.remove(documentId, storedDocument);
+            if (removed) {
+                log.debug(
+                        "Removed document {} ({} document(s) in workspace)",
+                        documentId,
+                        documents.size());
+            }
+            return removed;
         }
     }
 }

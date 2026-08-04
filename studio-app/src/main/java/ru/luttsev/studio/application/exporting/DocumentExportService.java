@@ -2,6 +2,7 @@ package ru.luttsev.studio.application.exporting;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.luttsev.studio.application.document.DocumentNotFoundException;
 import ru.luttsev.studio.application.document.OpenApiProcessingException;
@@ -15,6 +16,7 @@ import ru.luttsev.studio.openapi.result.ExportFailure;
 import ru.luttsev.studio.openapi.result.ExportResult;
 import ru.luttsev.studio.openapi.result.ExportSuccess;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public final class DocumentExportService {
@@ -49,11 +51,19 @@ public final class DocumentExportService {
                 document,
                 new ExportOptions(format, targetVersion));
         if (result instanceof ExportFailure failure) {
+            log.warn(
+                    "OpenAPI document export failed: {} diagnostic(s)",
+                    failure.diagnostics().size());
             throw new OpenApiProcessingException(
                     "OpenAPI document export failed",
                     failure.diagnostics());
         }
         ExportSuccess success = (ExportSuccess) result;
+        log.info(
+                "Exported document at revision {} as {} (target version {})",
+                revision,
+                format,
+                targetVersion.value());
         return new DocumentExport(
                 revision,
                 format,

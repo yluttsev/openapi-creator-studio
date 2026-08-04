@@ -4,10 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.luttsev.studio.core.command.DocumentCommand;
 import ru.luttsev.studio.generated.model.DocumentCommandRequest;
 
+@Slf4j
 @Component
 public final class DocumentCommandDispatcher {
 
@@ -30,6 +32,9 @@ public final class DocumentCommandDispatcher {
             }
         }
         this.handlers = Map.copyOf(indexedHandlers);
+        log.info(
+                "Registered {} document command handler(s)",
+                this.handlers.size());
     }
 
     public DocumentCommand dispatch(DocumentCommandRequest request) {
@@ -41,6 +46,10 @@ public final class DocumentCommandDispatcher {
                     "Unsupported document command request: "
                             + request.getClass().getName());
         }
+        log.debug(
+                "Dispatching {} to {}",
+                request.getClass().getSimpleName(),
+                handler.getClass().getSimpleName());
         return createCommand(handler, request);
     }
 
