@@ -1,91 +1,144 @@
 package ru.luttsev.studio.web.document;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.luttsev.studio.application.document.DocumentLifecycleService;
+import ru.luttsev.studio.application.document.DocumentNotFoundException;
 import ru.luttsev.studio.application.document.DocumentRepresentationService;
-import ru.luttsev.studio.application.document.DocumentValueConverter;
-import ru.luttsev.studio.core.document.OpenApiDocumentFactory;
-import ru.luttsev.studio.generated.model.CreateDocumentRequest;
-import ru.luttsev.studio.generated.model.DocumentResponse;
-import ru.luttsev.studio.generated.model.OpenDocumentResponse;
-import ru.luttsev.studio.infrastructure.workspace.InMemoryDocumentWorkspace;
-import ru.luttsev.studio.openapi.importing.DefaultOpenApiImporter;
-import ru.luttsev.studio.openapi.version.OpenApiVersionAdapterRegistry;
-import ru.luttsev.studio.openapi.version.OpenApiVersionAdapters;
+import ru.luttsev.studio.application.document.OpenedDocument;
+import ru.luttsev.studio.application.workspace.DocumentSession;
+import ru.luttsev.studio.core.model.OpenApiVersion;
+import ru.luttsev.studio.testsupport.ClasspathResources;
+import ru.luttsev.studio.testsupport.OpenApiDocuments;
+import ru.luttsev.studio.web.command.CommandResponseMapperImpl;
 
+@WebMvcTest(DocumentsController.class)
+@Import({
+        DocumentResponseMapperImpl.class,
+        DiagnosticMapperImpl.class,
+        CommandResponseMapperImpl.class
+})
 class DocumentsControllerTest {
 
-    private DocumentsController controller;
+    private static final String DOCUMENTS = "/api/v1/documents";
 
-    @BeforeEach
-    void setUp() {
-        OpenApiVersionAdapterRegistry adapters = OpenApiVersionAdapters.defaults();
-        DocumentLifecycleService lifecycleService = new DocumentLifecycleService(
-                new InMemoryDocumentWorkspace(),
-                new OpenApiDocumentFactory(),
-                new DefaultOpenApiImporter(),
-                adapters);
-        DocumentResponseMapper responseMapper =
-                new DocumentResponseMapperImpl(new DiagnosticMapperImpl());
-        controller = new DocumentsController(
-                lifecycleService,
-                new DocumentRepresentationService(
-                        adapters,
-                        new DocumentValueConverter()),
-                responseMapper);
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private DocumentLifecycleService lifecycleService;
+
+    @MockitoBean
+    private DocumentRepresentationService representationService;
+
+    @Test
+    void createsDocumentAndReturnsLocationAndEtag() throws Exception {
+        DocumentSession session = new DocumentSession(
+                UUID.randomUUID(), 0, OpenApiDocuments.blank());
+        when(lifecycleService.create(
+                eq(OpenApiVersion.V3_1_2), eq("Users API"), eq("1.0.0"), isNull()))
+                .thenReturn(new OpenedDocument(session, List.of()));
+
+        mockMvc.perform(post(DOCUMENTS)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resource("create-document.json")))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(HttpHeaders.ETAG, "\"0\""))
+                .andExpect(header().string(
+                        HttpHeaders.LOCATION, DOCUMENTS + "/" + session.id()))
+                .andExpect(jsonPath("$.id").value(session.id().toString()))
+                .andExpect(jsonPath("$.title").value("Test API"))
+                .andExpect(jsonPath("$.openApiVersion").value("3.1.2"));
     }
 
     @Test
-    void createsGetsAndClosesDocument() {
-        CreateDocumentRequest request = new CreateDocumentRequest(
-                "Orders API",
-                "1.0.0");
-
-        ResponseEntity<OpenDocumentResponse> created =
-                controller.createDocument(request);
-
-        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(created.getHeaders().getETag()).isEqualTo("\"0\"");
-        assertThat(created.getHeaders().getLocation()).isNotNull();
-        OpenDocumentResponse opened = created.getBody();
-        assertThat(opened).isNotNull();
-        assertThat(opened.getOpenApiVersion()).isEqualTo("3.1.2");
-
-        UUID documentId = opened.getId();
-        ResponseEntity<DocumentResponse> current =
-                controller.getDocument(documentId);
-
-        assertThat(current.getHeaders().getETag()).isEqualTo("\"0\"");
-        assertThat(current.getBody()).isNotNull();
-        assertThat(current.getBody().getDocument())
-                .containsEntry("openapi", "3.1.2")
-                .containsKey("info")
-                .containsKey("paths");
-
-        assertThat(controller.closeDocument("\"0\"", documentId)
-                .getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    void rejectsCreateRequestMissingTitle() throws Exception {
+        mockMvc.perform(post(DOCUMENTS)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resource("create-document-without-title.json")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("REQUEST_VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.violations[0].field").value("title"));
     }
 
     @Test
-    void importsYamlAndReturnsImportMetadata() {
-        ResponseEntity<OpenDocumentResponse> response =
-                controller.importDocument("""
-                        openapi: 3.1.2
-                        info:
-                          title: Imported API
-                          version: 2.0.0
-                        paths: {}
-                        """);
+    void rejectsMalformedRequestBody() throws Exception {
+        mockMvc.perform(post(DOCUMENTS)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resource("malformed-request.json")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST_BODY"));
+    }
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getTitle()).isEqualTo("Imported API");
-        assertThat(response.getBody().getApiVersion()).isEqualTo("2.0.0");
+    @Test
+    void returnsCurrentDocumentRepresentation() throws Exception {
+        DocumentSession session = new DocumentSession(
+                UUID.randomUUID(), 3, OpenApiDocuments.blank());
+        when(lifecycleService.get(session.id())).thenReturn(session);
+        when(representationService.represent(session.document()))
+                .thenReturn(Map.of("openapi", "3.1.2"));
+
+        mockMvc.perform(get(DOCUMENTS + "/" + session.id()))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ETAG, "\"3\""))
+                .andExpect(jsonPath("$.revision").value(3))
+                .andExpect(jsonPath("$.document.openapi").value("3.1.2"));
+    }
+
+    @Test
+    void returnsNotFoundForUnknownDocument() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        when(lifecycleService.get(documentId))
+                .thenThrow(new DocumentNotFoundException(documentId));
+
+        mockMvc.perform(get(DOCUMENTS + "/" + documentId))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("DOCUMENT_NOT_FOUND"));
+    }
+
+    @Test
+    void closesDocumentAtExpectedRevision() throws Exception {
+        UUID documentId = UUID.randomUUID();
+
+        mockMvc.perform(delete(DOCUMENTS + "/" + documentId)
+                        .header(HttpHeaders.IF_MATCH, "\"0\""))
+                .andExpect(status().isNoContent());
+
+        verify(lifecycleService).close(documentId, 0L);
+    }
+
+    @Test
+    void requiresIfMatchHeaderToCloseDocument() throws Exception {
+        mockMvc.perform(delete(DOCUMENTS + "/" + UUID.randomUUID()))
+                .andExpect(status().isPreconditionRequired())
+                .andExpect(jsonPath("$.code").value("REVISION_REQUIRED"));
+    }
+
+    private String resource(String fileName) {
+        return ClasspathResources.readString("/http/" + fileName);
     }
 }
