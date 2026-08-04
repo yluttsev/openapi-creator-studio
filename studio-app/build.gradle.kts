@@ -1,5 +1,6 @@
 plugins {
     java
+    `java-test-fixtures`
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.openapi.generator)
@@ -25,8 +26,42 @@ dependencies {
     annotationProcessor(libs.mapstruct.processor)
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation(testFixtures(project()))
     testCompileOnly("org.projectlombok:lombok")
     testAnnotationProcessor("org.projectlombok:lombok")
+
+    testFixturesImplementation(project(":studio-core"))
+}
+
+testing {
+    suites {
+        register<JvmTestSuite>("integrationTest") {
+            useJUnitJupiter("6.0.0")
+
+            sources {
+                java.setSrcDirs(listOf("src/integration-test/java"))
+                resources.setSrcDirs(listOf("src/integration-test/resources"))
+            }
+
+            dependencies {
+                implementation(project())
+                implementation(testFixtures(project()))
+                implementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        shouldRunAfter(tasks.test)
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn(testing.suites.named("integrationTest"))
 }
 
 tasks.jar {
@@ -86,4 +121,19 @@ tasks.named("compileJava") {
 
 tasks.named("check") {
     dependsOn(tasks.named("openApiValidate"))
+}
+
+// The plain `jar` task is disabled above (this app ships as a `bootJar`), so
+// any project-dependency resolution (`implementation(project())`,
+// `java-test-fixtures`' rewiring of `test`) that expects a jar artifact ends
+// up with a missing file on the classpath instead of the compiled classes.
+// Point both test sourceSets at the real `main` output directly.
+sourceSets.named("test") {
+    compileClasspath += sourceSets.named("main").get().output
+    runtimeClasspath += sourceSets.named("main").get().output
+}
+
+sourceSets.named("integrationTest") {
+    compileClasspath += sourceSets.named("main").get().output
+    runtimeClasspath += sourceSets.named("main").get().output
 }
