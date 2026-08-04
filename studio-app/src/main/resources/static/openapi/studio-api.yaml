@@ -477,7 +477,7 @@ components:
         pathTemplate:
           type: string
           minLength: 1
-          pattern: '^/'
+          pattern: '^/.*'
           example: /users/{userId}
     OperationCommandPayload:
       type: object

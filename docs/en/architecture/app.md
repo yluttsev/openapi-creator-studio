@@ -100,6 +100,11 @@ violations include stable field names and safe messages. A missing `If-Match` he
 distinguished as `428`, while document, concurrency, command, and OpenAPI processing
 failures retain their `404`, `412`, `409`, and `422` responses.
 
-## Planned application layers
+## HTTP integration tests
 
-Upcoming work adds HTTP integration tests.
+Full-context MockMvc scenarios exercise the generated transport contract through the
+actual controllers, application services, in-memory workspace, core commands, and
+OpenAPI adapters. They cover document lifecycle, YAML import, YAML/JSON export, manual
+validation, revision and ETag transitions, and the contractual `400`, `404`, `409`,
+`412`, `422`, and `428` Problem Details responses. HTTP request and response body
+fixtures are stored under test resources rather than embedded in Java test code.

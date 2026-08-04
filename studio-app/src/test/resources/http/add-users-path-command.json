@@ -1,0 +1,6 @@
+{
+  "type": "ADD_PATH",
+  "payload": {
+    "pathTemplate": "/users"
+  }
+}

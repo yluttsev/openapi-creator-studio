@@ -27,6 +27,8 @@ Key rules:
 - do not use `var`;
 - keep models, DTOs, operation results, and other independent types in
   separate files instead of nesting them inside other classes;
+- keep HTTP request and response body fixtures in test resources instead of
+  embedding JSON, YAML, or other payloads directly in Java test code;
 - when documentation and code disagree, the code is the source of truth;
   update the relevant documentation after an architectural decision changes;
 - verify `studio-core` changes with `.\gradlew.bat :studio-core:test` and the
