@@ -7,11 +7,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.luttsev.studio.application.command.CommandRejectedException;
 import ru.luttsev.studio.application.document.DocumentNotFoundException;
 import ru.luttsev.studio.application.document.OpenApiProcessingException;
 import ru.luttsev.studio.application.workspace.RevisionConflictException;
 import ru.luttsev.studio.generated.model.ApiProblem;
+import ru.luttsev.studio.generated.model.CommandRejectedProblem;
 import ru.luttsev.studio.generated.model.OpenApiProcessingProblem;
+import ru.luttsev.studio.web.command.CommandResponseMapper;
 import ru.luttsev.studio.web.document.DiagnosticMapper;
 
 @RestControllerAdvice
@@ -21,6 +24,22 @@ public final class ApiExceptionHandler {
     private static final URI ABOUT_BLANK = URI.create("about:blank");
 
     private final DiagnosticMapper diagnosticMapper;
+    private final CommandResponseMapper commandResponseMapper;
+
+    @ExceptionHandler(CommandRejectedException.class)
+    ResponseEntity<CommandRejectedProblem> handleCommandRejected(
+            CommandRejectedException exception) {
+        CommandRejectedProblem problem = new CommandRejectedProblem(
+                ABOUT_BLANK,
+                "Command rejected",
+                HttpStatus.CONFLICT.value(),
+                exception.getMessage(),
+                "COMMAND_REJECTED",
+                commandResponseMapper.map(exception.getIssues()));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
 
     @ExceptionHandler(DocumentNotFoundException.class)
     ResponseEntity<ApiProblem> handleNotFound(
@@ -58,11 +77,11 @@ public final class ApiExceptionHandler {
         OpenApiProcessingProblem problem = new OpenApiProcessingProblem(
                 ABOUT_BLANK,
                 "OpenAPI processing failed",
-                HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                HttpStatus.UNPROCESSABLE_CONTENT.value(),
                 exception.getMessage(),
                 "OPENAPI_PROCESSING_FAILED",
                 diagnosticMapper.map(exception.getDiagnostics()));
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
     }
