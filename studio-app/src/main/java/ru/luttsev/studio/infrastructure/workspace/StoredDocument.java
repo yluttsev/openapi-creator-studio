@@ -50,4 +50,13 @@ final class StoredDocument {
         }
         return new WorkspaceCommandExecution(snapshot(), result);
     }
+
+    synchronized void verifyRevision(long expectedRevision) {
+        if (expectedRevision != revision) {
+            throw new RevisionConflictException(
+                    id,
+                    expectedRevision,
+                    revision);
+        }
+    }
 }

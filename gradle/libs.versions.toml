@@ -1,8 +1,21 @@
 [versions]
 jackson = "3.2.1"
 jsonSchemaValidator = "3.0.6"
+mapstruct = "1.6.3"
+openapiGenerator = "7.24.0"
+springBoot = "4.1.0"
+springDependencyManagement = "1.1.7"
+springdoc = "3.0.3"
 
 [libraries]
 jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "jsonSchemaValidator" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
+[plugins]
+openapi-generator = { id = "org.openapi.generator", version.ref = "openapiGenerator" }
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }

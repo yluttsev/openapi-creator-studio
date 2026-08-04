@@ -59,8 +59,15 @@ public final class InMemoryDocumentWorkspace implements DocumentWorkspace {
     }
 
     @Override
-    public boolean delete(UUID documentId) {
+    public boolean delete(UUID documentId, long expectedRevision) {
         Objects.requireNonNull(documentId, "documentId must not be null");
-        return documents.remove(documentId) != null;
+        StoredDocument storedDocument = documents.get(documentId);
+        if (storedDocument == null) {
+            return false;
+        }
+        synchronized (storedDocument) {
+            storedDocument.verifyRevision(expectedRevision);
+            return documents.remove(documentId, storedDocument);
+        }
     }
 }
